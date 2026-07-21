@@ -434,6 +434,7 @@ function initFirebase(){
 
 function signInWithGoogle(){
   const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
   firebase.auth().signInWithPopup(provider).catch(()=>{
     firebase.auth().signInWithRedirect(provider).catch(err=>{
       openAlert({ title:"No se ha podido iniciar sesión", message: err.message || String(err) });
