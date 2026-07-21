@@ -445,7 +445,7 @@ function showToast(message){
   toast.textContent = message;
   toast.classList.add("show");
   clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(()=>{ toast.classList.remove("show"); }, 2200);
+  toastTimeout = setTimeout(()=>{ toast.classList.remove("show"); }, 3800);
 }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function nl2br(s){ return escapeHtml(s).replace(/\n/g,"<br>"); }
