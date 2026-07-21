@@ -194,10 +194,13 @@ select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid
 .cal-day-add:hover{ background: var(--sage-soft); color: var(--sage-deep); }
 @media print{
   .no-print{ display:none !important; }
+  @page{ size: A4; margin: 14mm 16mm; }
   body{ background:#fff; }
   .app{ max-width:none; padding:0; }
+  .cal-grid{ break-inside: avoid; }
   .cal-day{ break-inside: avoid; border-color:#ccc; }
   .cal-day-task{ background:#f0f0f0; color:#222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cal-section{ break-inside: avoid; border-color:#ccc; box-shadow:none; }
 }
 .shop-item{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
 .shop-item:last-child{ border-bottom:none; }
@@ -472,6 +475,10 @@ function showToast(message){
   toastTimeout = setTimeout(()=>{ toast.classList.remove("show"); }, 3800);
 }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function isSafariBrowser(){
+  const ua = navigator.userAgent;
+  return /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(ua);
+}
 function nl2br(s){ return escapeHtml(s).replace(/\n/g,"<br>"); }
 
 /* =========================================================
@@ -1248,7 +1255,13 @@ appEl.addEventListener("click", e=>{
       renderApp();
       break;
     }
-    case "cal-print": window.print(); break;
+    case "cal-print":
+      if(isSafariBrowser()){
+        openAlert({ title:"Imprimir en Safari", message:"En Safari, este botón puede tardar mucho en abrir el diálogo de impresión. Es más rápido usar Cmd+P (o Archivo → Imprimir) directamente." });
+      } else {
+        window.print();
+      }
+      break;
     case "cal-add-tarea-dia":
       openPrompt({ title:"Nueva tarea", placeholder:"Ej. Regar las plantas", submitAction:"create-tarea-dia", fecha: btn.dataset.date });
       break;
