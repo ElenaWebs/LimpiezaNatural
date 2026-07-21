@@ -147,10 +147,18 @@ a{ color: var(--sage-deep); }
 .ficha-photo-wrap img{ width:100%; display:block; max-height: 320px; object-fit:cover; }
 .ficha-photo-empty{ width:100%; height:150px; border-radius: var(--radius); background: var(--sage-soft); color: var(--sage-deep); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; margin:14px 0 22px; font-size:.82rem; }
 .ficha-photo-empty svg{ width:26px; height:26px; opacity:.7; }
-.producto-foto-wrap{ width:96px; height:96px; border-radius: var(--radius-sm); overflow:hidden; background: var(--bg-alt); margin-bottom:8px; }
-.producto-foto-wrap img{ width:100%; height:100%; object-fit:cover; display:block; }
-.producto-foto-empty{ width:96px; height:96px; border-radius: var(--radius-sm); background: var(--sage-soft); color: var(--sage-deep); border:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; font-size:.68rem; text-align:center; padding:6px; margin-bottom:12px; }
+.producto-main-row{ display:flex; gap:20px; align-items:flex-start; }
+.producto-fields-col{ flex:1; min-width:0; }
+.producto-foto-col{ flex-shrink:0; width:120px; display:flex; flex-direction:column; align-items:center; }
+.producto-foto-wrap{ width:120px; height:150px; border-radius: var(--radius-sm); overflow:hidden; background: var(--bg-alt); margin-bottom:8px; display:flex; align-items:center; justify-content:center; }
+.producto-foto-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
+.producto-foto-empty{ width:120px; height:150px; border-radius: var(--radius-sm); background: var(--sage-soft); color: var(--sage-deep); border:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; font-size:.68rem; text-align:center; padding:6px; margin-bottom:8px; }
 .producto-foto-empty svg{ width:20px; height:20px; opacity:.8; }
+@media (max-width: 560px){
+  .producto-main-row{ flex-direction: column-reverse; }
+  .producto-foto-col{ width:100%; }
+  .producto-foto-wrap, .producto-foto-empty{ width:120px; }
+}
 .field-block{ margin-bottom: 22px; }
 .field-label{ font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color: var(--ink-faint); margin-bottom:7px; display:block; }
 .field-value{ outline:none; line-height:1.6; min-height: 1.4em; white-space: pre-wrap; }
@@ -324,6 +332,7 @@ const DEFAULT_INGREDIENTES = {
   carbonatoSodico: { nombre: "Carbonato sódico" },
   bicarbonatoSodico: { nombre: "Bicarbonato sódico" },
   percarbonatoSodico: { nombre: "Percarbonato sódico" },
+  aguaOxigenada: { nombre: "Agua oxigenada" },
   acidoCitrico: { nombre: "Ácido cítrico" },
   jabonPotasico: { nombre: "Jabón potásico" },
   jabonSodico: { nombre: "Jabón sódico" },
@@ -361,10 +370,11 @@ let ingredientesSnapshotSeen = false;
 let ingredientesSeeded = false;
 function maybeSeedIngredientes(){
   if(ingredientesSeeded || !ingredientesSnapshotSeen || !isAdmin()) return;
-  if(Object.keys(ingredientesData).length > 0) return;
+  const missing = Object.entries(DEFAULT_INGREDIENTES).filter(([id])=> !(id in ingredientesData));
+  if(missing.length === 0) return;
   ingredientesSeeded = true;
   const db = firebase.firestore();
-  Object.entries(DEFAULT_INGREDIENTES).forEach(([id,data])=>{
+  missing.forEach(([id,data])=>{
     db.collection("ingredientes").doc(id).set(data).catch(()=>{});
   });
 }
@@ -692,7 +702,7 @@ const LIST_META = {
   ingredientes: { title: "Ingredientes esenciales", singular: "ingrediente", back: "home", collection: "ingredientes", openScreen: "ingrediente", emptyIcon: "flask" },
   etiquetasInci: { title: "Etiquetas INCI", singular: "etiqueta INCI", back: "home", collection: "etiquetasInci", openScreen: "etiquetaInci", emptyIcon: "tag" }
 };
-const INGREDIENTES_ORDER = ["agua","alcohol70","vinagreLimpieza","carbonatoSodico","bicarbonatoSodico","percarbonatoSodico","acidoCitrico","jabonPotasico","jabonSodico","trapos","estropajos","recipientes"];
+const INGREDIENTES_ORDER = ["agua","alcohol70","vinagreLimpieza","carbonatoSodico","bicarbonatoSodico","percarbonatoSodico","aguaOxigenada","acidoCitrico","jabonPotasico","jabonSodico","trapos","estropajos","recipientes"];
 function renderListScreen(kind){
   const meta = LIST_META[kind];
   const data = getStoreFor(meta.collection);
@@ -709,7 +719,7 @@ function renderListScreen(kind){
   const showAddToList = kind === "ingredientes" && adminOn;
   let cardsHtml = items.map(([id, d])=> `
     <div class="card" data-action="open-${meta.openScreen}" data-id="${id}" tabindex="0" role="button">
-      ${d.foto ? `<img class="card-thumb" src="${d.foto}" alt="">` : `<div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>`}
+      <div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>
       <h3>${escapeHtml(d.nombre || "Sin nombre")}</h3>
       ${d.subtitulo ? `<div class="card-sub">${escapeHtml(d.subtitulo)}</div>` : ""}
       ${showAddToList ? `<button class="add-to-list-btn" data-action="add-ingrediente-to-shopping" data-nombre="${escapeHtml(d.nombre||"")}" title="Añadir a la lista de la compra" aria-label="Añadir a la lista de la compra">${icon("plus")}</button>` : ""}
@@ -779,7 +789,7 @@ function renderFormulasEnCategoria(categoriaId){
 
   let cardsHtml = items.map(([id, d])=> `
     <button class="card" data-action="open-formula" data-id="${id}">
-      ${d.foto ? `<img class="card-thumb" src="${d.foto}" alt="">` : `<div class="card-thumb-placeholder">${icon("drop")}</div>`}
+      <div class="card-thumb-placeholder">${icon("drop")}</div>
       <h3>${escapeHtml(d.nombre || "Sin nombre")}</h3>
     </button>`).join("");
 
@@ -807,7 +817,7 @@ const SIMPLE_FICHA_CONFIG = {
   ingredientes: {
     backScreen: "ingredientes", backLabel: "Volver a ingredientes",
     titlePlaceholder: "Nombre del ingrediente", subtituloPlaceholder: "Subtítulo o nombre técnico",
-    deleteAction: "delete-ingrediente",
+    deleteAction: "delete-ingrediente", noPhoto: true,
     fields: [
       { label:"Descripción", field:"descripcion", placeholder:"Qué es y de dónde viene" },
       { label:"Para qué sirve", field:"usos", placeholder:"Usos principales en limpieza" },
@@ -839,7 +849,7 @@ function renderFichaSimple(collection, id){
     <h1 class="ficha-title ${ed}" contenteditable="${editAttr}" data-field="nombre" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.titlePlaceholder}">${escapeHtml(d.nombre||"")}</h1>
   </div>
   <div class="field-value ${ed}" contenteditable="${editAttr}" data-field="subtitulo" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.subtituloPlaceholder}" style="color:var(--ink-soft);margin-bottom:14px;">${escapeHtml(d.subtitulo||"")}</div>
-  ${renderFichaPhoto(d, collection, id, adminOn)}
+  ${cfg.noPhoto ? "" : renderFichaPhoto(d, collection, id, adminOn)}
   ${cfg.fields.map(f=> renderField(f.label, f.field, d[f.field], collection, id, adminOn, f.placeholder)).join("")}
   ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="${cfg.deleteAction}" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
   `;
@@ -917,17 +927,21 @@ function renderFichaFormula(id){
 
   ${hasProducto ? `
   <div class="subsection">
-    <h4>Producto que compro</h4>
+    <h4>Producto comercial</h4>
     <div class="mini-grid">
       ${renderSubField("Marca / producto", "marca", producto.marca, "formulas", id, "producto", adminOn, "Nombre del producto")}
       ${renderSubField("Tienda", "tienda", producto.tienda, "formulas", id, "producto", adminOn, "Dónde lo compro")}
     </div>
-    ${renderProductoFotoSmall(d, id, adminOn)}
-    <div class="mini-grid">
-      ${renderSubField("Cantidad del envase", "cantidad", producto.cantidad, "formulas", id, "producto", adminOn, "Ej. 750", "number")}
-      ${renderUnidadField(producto.unidad, id, adminOn)}
-      ${renderSubField(`Precio del envase`, "precioEnvase", producto.precioEnvase, "formulas", id, "producto", adminOn, "Ej. 3.20", "number")}
-      ${renderMonedaUnidadField(producto.monedaUnidad, id, adminOn)}
+    <div class="producto-main-row">
+      <div class="producto-fields-col">
+        <div class="mini-grid">
+          ${renderSubField("Cantidad del envase", "cantidad", producto.cantidad, "formulas", id, "producto", adminOn, "Ej. 750", "number")}
+          ${renderUnidadField(producto.unidad, id, adminOn)}
+          ${renderSubField(`Precio del envase`, "precioEnvase", producto.precioEnvase, "formulas", id, "producto", adminOn, "Ej. 3.20", "number")}
+          ${renderMonedaUnidadField(producto.monedaUnidad, id, adminOn)}
+        </div>
+      </div>
+      ${renderProductoFotoSmall(d, id, adminOn)}
     </div>
     ${priceLine}
     ${producto.link || adminOn ? `<div class="field-block"><span class="field-label">Enlace</span><div class="field-value ${ed}" contenteditable="${editAttr}" data-field="link" data-collection="formulas" data-id="${id}" data-sub="producto" data-placeholder="https://...">${escapeHtml(producto.link||"")}</div>${producto.link ? `<a href="${escapeHtml(producto.link)}" target="_blank" rel="noopener" class="text-btn" style="margin-top:6px;">${icon("externalLink")}Abrir enlace</a>` : ""}</div>` : ""}
@@ -958,13 +972,13 @@ function renderMonedaUnidadField(moneda, id, adminOn){
 }
 function renderProductoFotoSmall(d, id, adminOn){
   if(d.foto){
-    return `<div class="field-block">
+    return `<div class="producto-foto-col">
       <div class="producto-foto-wrap"><img src="${d.foto}" alt=""></div>
       ${adminOn ? `<button class="text-btn" data-action="change-photo" data-collection="formulas" data-id="${id}">${icon("photo")}Cambiar foto</button>` : ""}
     </div>`;
   }
   if(adminOn){
-    return `<button class="producto-foto-empty" data-action="change-photo" data-collection="formulas" data-id="${id}">${icon("photo")}<span>Foto del producto</span></button>`;
+    return `<div class="producto-foto-col"><button class="producto-foto-empty" data-action="change-photo" data-collection="formulas" data-id="${id}">${icon("photo")}<span>Foto del producto</span></button></div>`;
   }
   return "";
 }
