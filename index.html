@@ -109,9 +109,17 @@ a{ color: var(--sage-deep); }
   background: var(--card); border:1px solid var(--line); border-radius: var(--radius-sm);
   padding: 16px 14px; display:flex; flex-direction:column; gap:10px; align-items:flex-start;
   transition: box-shadow .15s ease, transform .15s ease; text-align:left; min-height: 128px;
+  position: relative; cursor: pointer;
 }
 .card:hover{ box-shadow: 0 6px 18px var(--shadow); transform: translateY(-1px); }
 .card .card-thumb{ width:100%; height:74px; border-radius:8px; object-fit:cover; background: var(--bg-alt); }
+.add-to-list-btn{
+  position:absolute; top:8px; right:8px; width:26px; height:26px; border-radius:50%;
+  background: var(--sage-soft); color: var(--sage-deep); display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 1px 3px var(--shadow); transition: background .15s ease, color .15s ease;
+}
+.add-to-list-btn svg{ width:13px; height:13px; }
+.add-to-list-btn:hover{ background: var(--sage); color:#fff; }
 .card .card-thumb-placeholder{ width:100%; height:74px; border-radius:8px; background: var(--sage-soft); color: var(--sage-deep); display:flex; align-items:center; justify-content:center; }
 .card .card-thumb-placeholder svg{ width:22px; height:22px; opacity:.7; }
 .card h3{ font-size: 1rem; margin:0; }
@@ -627,12 +635,14 @@ function renderListScreen(kind){
     return (a[1].nombre||"").localeCompare(b[1].nombre||"", "es");
   });
   const adminOn = isAdmin();
+  const showAddToList = kind === "ingredientes" && adminOn;
   let cardsHtml = items.map(([id, d])=> `
-    <button class="card" data-action="open-${meta.openScreen}" data-id="${id}">
+    <div class="card" data-action="open-${meta.openScreen}" data-id="${id}" tabindex="0" role="button">
       ${d.foto ? `<img class="card-thumb" src="${d.foto}" alt="">` : `<div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>`}
       <h3>${escapeHtml(d.nombre || "Sin nombre")}</h3>
       ${d.subtitulo ? `<div class="card-sub">${escapeHtml(d.subtitulo)}</div>` : ""}
-    </button>`).join("");
+      ${showAddToList ? `<button class="add-to-list-btn" data-action="add-ingrediente-to-shopping" data-nombre="${escapeHtml(d.nombre||"")}" title="Añadir a la lista de la compra" aria-label="Añadir a la lista de la compra">${icon("plus")}</button>` : ""}
+    </div>`).join("");
   if(adminOn){
     cardsHtml += `<button class="add-tile" data-action="add-${kind}">${icon("plus")}<span>Añadir ${meta.singular}</span></button>`;
   }
@@ -1157,6 +1167,18 @@ appEl.addEventListener("click", e=>{
       break;
     }
     case "shop-add-btn": addShopItem(btn.parentElement.querySelector("input")); break;
+    case "add-ingrediente-to-shopping": {
+      const nombre = btn.dataset.nombre;
+      const data = JSON.parse(JSON.stringify(listaCompraData));
+      const yaExiste = data.items.some(it=> it.texto === nombre);
+      if(!yaExiste){
+        data.items.push({ texto: nombre, marcada: false });
+        saveContenido("lista", data);
+      }
+      btn.innerHTML = icon("check");
+      setTimeout(()=>{ btn.innerHTML = icon("plus"); }, 1200);
+      break;
+    }
   }
 });
 
