@@ -219,14 +219,14 @@ select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid
    en modo local (localStorage) para que puedas probarla ya.
    ========================================================= */
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyDkLgxvAeqJeLE3niXKnu1-r4HuwGnvsEQ",
+  authDomain: "limpiezanatural-b0a89.firebaseapp.com",
+  projectId: "limpiezanatural-b0a89",
+  storageBucket: "limpiezanatural-b0a89.firebasestorage.app",
+  messagingSenderId: "112693339667",
+  appId: "1:112693339667:web:15f4eea1a61314ebcf01e6"
 };
-const ADMIN_UID = "PON_AQUI_TU_UID_DE_GOOGLE";
+const ADMIN_UID = "X80GkoYagSZ2HHIPW1ebpwR6ObG3";
 
 let USE_FIREBASE = false;
 let currentUser = null;
@@ -298,10 +298,24 @@ function persistLocal(key){
 }
 
 /* --------- Firestore listeners (solo si USE_FIREBASE) --------- */
+let ingredientesSnapshotSeen = false;
+let ingredientesSeeded = false;
+function maybeSeedIngredientes(){
+  if(ingredientesSeeded || !ingredientesSnapshotSeen || !isAdmin()) return;
+  if(Object.keys(ingredientesData).length > 0) return;
+  ingredientesSeeded = true;
+  const db = firebase.firestore();
+  Object.entries(DEFAULT_INGREDIENTES).forEach(([id,data])=>{
+    db.collection("ingredientes").doc(id).set(data).catch(()=>{});
+  });
+}
 function startFirestoreListeners(){
   const db = firebase.firestore();
   db.collection("ingredientes").onSnapshot(snap=>{
-    const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); ingredientesData = next; renderApp();
+    const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); ingredientesData = next;
+    ingredientesSnapshotSeen = true;
+    renderApp();
+    maybeSeedIngredientes();
   }, ()=>{});
   db.collection("formulas").onSnapshot(snap=>{
     const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); formulasData = next; renderApp();
@@ -339,6 +353,7 @@ function initFirebase(){
       authReady = true;
       if(user){ upsertUserProfile(user); }
       renderApp();
+      maybeSeedIngredientes();
     });
   }catch(e){
     USE_FIREBASE = false;
