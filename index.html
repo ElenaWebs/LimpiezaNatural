@@ -530,7 +530,7 @@ function renderTopbar(){
       <button class="icon-btn" data-action="go-calendario" title="Calendario" aria-label="Calendario">${icon("calendar")}</button>
       <button class="icon-btn" data-action="go-lista" title="Lista de la compra" aria-label="Lista de la compra">${icon("checklist")}</button>
       ${USE_FIREBASE && currentUser ? `<button class="icon-btn" data-action="do-signout" title="Cerrar sesión" aria-label="Cerrar sesión">${icon("logout")}</button>` : ""}
-      <button class="icon-btn ${adminOn?"admin-on":""}" data-action="toggle-admin" title="${adminOn?"Sesión de administradora":"Acceso administradora"}" aria-label="Acceso administradora">${icon(adminOn?"lockOpen":"lockClosed")}</button>
+      ${!USE_FIREBASE ? `<button class="icon-btn ${adminOn?"admin-on":""}" data-action="toggle-admin" title="${adminOn?"Sesión de administradora":"Acceso administradora"}" aria-label="Acceso administradora">${icon(adminOn?"lockOpen":"lockClosed")}</button>` : ""}
     </div>
   </div>`;
 }
