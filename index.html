@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Limpieza Natural — Cuaderno</title>
+<meta name="theme-color" content="#f6f4f0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Questrial&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg: #f6f4ef;
+  --bg-alt: #efece3;
+  --card: #ffffff;
+  --ink: #2b2a27;
+  --ink-soft: #74705f;
+  --ink-faint: #a8a190;
+  --line: #e3ded2;
+  --line-strong: #d2c9b7;
+  --sage: #7f9788;
+  --sage-deep: #4f6459;
+  --sage-soft: #e5ebe4;
+  --clay: #bf7c56;
+  --clay-soft: #f2e3d5;
+  --danger: #a8503f;
+  --shadow: rgba(43,42,39,.08);
+  --shadow-lift: rgba(43,42,39,.14);
+  --radius: 18px;
+  --radius-sm: 11px;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, "Segoe UI", sans-serif;
+}
+*{ box-sizing: border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,h4{ font-family: var(--font-display); font-weight: 500; color: var(--ink); margin:0 0 .3em; letter-spacing: .01em; }
+p{ margin: 0 0 .7em; line-height: 1.55; }
+button{ font-family: var(--font-body); cursor:pointer; border:none; background:none; padding:0; margin:0; color:inherit; text-align:inherit; font-size:inherit; -webkit-appearance:none; }
+a{ color: var(--sage-deep); }
+.app{ max-width: 720px; margin: 0 auto; padding: 22px 18px 80px; min-height: 100vh; }
+
+/* ---------- topbar ---------- */
+.topbar{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom: 30px; }
+.brand{ display:flex; flex-direction:column; cursor:pointer; min-width:0; }
+.brand h1{ font-size: 1.7rem; margin:0; overflow-wrap:break-word; }
+.brand span{ font-size:.78rem; color: var(--ink-faint); letter-spacing:.06em; text-transform:uppercase; margin-top:2px; }
+.top-actions{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.icon-btn{
+  width:42px; height:42px; border-radius:50%; border:1px solid var(--line);
+  background: var(--card); color: var(--ink); display:flex; align-items:center; justify-content:center;
+  transition: box-shadow .15s ease, transform .15s ease, background .15s ease; flex-shrink:0;
+}
+.icon-btn:hover{ box-shadow: 0 4px 14px var(--shadow); transform: translateY(-1px); }
+.icon-btn.admin-on{ background: var(--sage); border-color: var(--sage); color:#fff; }
+.icon-btn svg{ width:19px; height:19px; }
+.back-btn{ display:inline-flex; align-items:center; gap:6px; color: var(--ink-soft); font-size:.88rem; border:none; background:none; padding: 6px 0; margin-bottom: 14px; }
+.back-btn svg{ width:16px; height:16px; }
+
+/* ---------- home ---------- */
+.hero-grid{ display:flex; flex-direction:column; gap:16px; margin-bottom: 28px; }
+.credits-link{ display:block; margin: 18px auto 0; color: var(--ink-faint); font-size:.68rem; text-decoration: underline; text-underline-offset: 2px; }
+.tile{
+  background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
+  padding: 34px 26px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:14px;
+  box-shadow: 0 1px 3px var(--shadow); transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+.tile:hover{ box-shadow: 0 10px 26px var(--shadow-lift); transform: translateY(-2px); border-color: var(--line-strong); }
+.tile .tile-icon{ width:52px; height:52px; border-radius:50%; background: var(--sage-soft); color: var(--sage-deep); display:flex; align-items:center; justify-content:center; }
+.tile .tile-icon svg{ width:26px; height:26px; }
+.tile h2{ font-size: 1.32rem; }
+.tile p{ color: var(--ink-soft); font-size:.9rem; margin:0; }
+.dev-banner{
+  background: var(--clay-soft); border:1px dashed var(--clay); color:#6b4127; border-radius: var(--radius-sm);
+  padding: 12px 16px; font-size:.82rem; margin-bottom: 20px; line-height:1.5;
+}
+.dev-banner strong{ display:block; margin-bottom:2px; }
+.seals-row{ display:flex; flex-wrap:wrap; gap:22px; justify-content:center; margin: 4px 0 32px; }
+.seal{ display:flex; flex-direction:column; align-items:center; gap:10px; width: 92px; }
+.seal-ring{
+  width: 78px; height: 78px; border-radius: 50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--sage-soft); color: var(--sage-deep);
+}
+.seal-ring svg{ width:32px; height:32px; }
+.seal-ring img{ width:32px; height:32px; object-fit:contain; }
+.seal-text{ font-family: 'Questrial', var(--font-body); font-weight:700; font-size:.58rem; line-height:1.25; text-align:center; letter-spacing:-.01em; text-transform:uppercase; color: var(--sage-deep); }
+
+/* ---------- puerta de acceso ---------- */
+.login-gate{ min-height: 72vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:6px; padding: 20px; }
+.login-gate h1{ font-size: 2rem; margin:0 0 16px; }
+.login-gate p{ color: var(--ink-soft); max-width: 320px; }
+.login-gate .pill-btn{ margin-top: 14px; }
+
+/* ---------- lists ---------- */
+.section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px; gap:10px; }
+.section-head h1{ font-size: 1.5rem; }
+.grid-cards{ display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:12px; }
+.card{
+  background: var(--card); border:1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 16px 14px; display:flex; flex-direction:column; gap:10px; align-items:flex-start;
+  transition: box-shadow .15s ease, transform .15s ease; text-align:left; min-height: 128px;
+}
+.card:hover{ box-shadow: 0 6px 18px var(--shadow); transform: translateY(-1px); }
+.card .card-thumb{ width:100%; height:74px; border-radius:8px; object-fit:cover; background: var(--bg-alt); }
+.card .card-thumb-placeholder{ width:100%; height:74px; border-radius:8px; background: var(--sage-soft); color: var(--sage-deep); display:flex; align-items:center; justify-content:center; }
+.card .card-thumb-placeholder svg{ width:22px; height:22px; opacity:.7; }
+.card h3{ font-size: 1rem; margin:0; }
+.card .card-sub{ font-size:.78rem; color: var(--ink-faint); margin-top:-8px; }
+.empty-state{ text-align:center; padding: 50px 20px; color: var(--ink-faint); }
+.empty-state svg{ width:34px; height:34px; margin-bottom:10px; opacity:.5; }
+.add-tile{
+  border:1.5px dashed var(--line-strong); background:transparent; border-radius: var(--radius-sm);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:128px; color: var(--ink-soft); font-size:.85rem;
+}
+.add-tile:hover{ border-color: var(--sage); color: var(--sage-deep); }
+.add-tile svg{ width:22px; height:22px; }
+
+/* ---------- ficha ---------- */
+.ficha-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom: 8px; }
+.ficha-title{ font-size: 1.7rem; outline:none; }
+.ficha-photo-wrap{ width:100%; border-radius: var(--radius); overflow:hidden; margin: 14px 0 22px; background: var(--bg-alt); }
+.ficha-photo-wrap img{ width:100%; display:block; max-height: 320px; object-fit:cover; }
+.ficha-photo-empty{ width:100%; height:150px; border-radius: var(--radius); background: var(--sage-soft); color: var(--sage-deep); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; margin:14px 0 22px; font-size:.82rem; }
+.ficha-photo-empty svg{ width:26px; height:26px; opacity:.7; }
+.field-block{ margin-bottom: 22px; }
+.field-label{ font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color: var(--ink-faint); margin-bottom:7px; display:block; }
+.field-value{ outline:none; line-height:1.6; min-height: 1.4em; white-space: pre-wrap; }
+.field-value.editable{ border-bottom:1px dashed var(--line-strong); padding-bottom:6px; }
+.field-value:empty::before{ content: attr(data-placeholder); color: var(--ink-faint); font-style: italic; }
+.card-actions-row{ display:flex; gap:8px; margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
+.text-btn{ background:none; border:none; color: var(--ink-soft); font-size:.85rem; display:flex; align-items:center; gap:6px; padding:6px 4px; }
+.text-btn:hover{ color: var(--danger); }
+.text-btn svg{ width:15px; height:15px; }
+
+/* ---------- producto/receta grid ---------- */
+.subsection{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 20px 20px 6px; margin-bottom:18px; }
+.subsection h4{ font-size: .95rem; color: var(--sage-deep); text-transform:uppercase; letter-spacing:.05em; margin-bottom: 16px; }
+.mini-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+.mini-grid .field-block{ margin-bottom:16px; }
+.price-highlight{ background: var(--sage-soft); border-radius: var(--radius-sm); padding: 12px 16px; display:flex; align-items:baseline; gap:8px; margin: 4px 0 18px; }
+.price-highlight .num{ font-family: var(--font-display); font-size:1.4rem; color: var(--sage-deep); }
+.price-highlight .lbl{ font-size:.78rem; color: var(--ink-soft); }
+select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-family: var(--font-body); font-size:.9rem; }
+
+/* ---------- calendario / lista compra ---------- */
+.cal-section{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin-bottom:16px; }
+.cal-section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.cal-section-head h3{ font-size:1.05rem; }
+.cal-task{ display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
+.cal-task:last-child{ border-bottom:none; }
+.cal-task .dot{ width:6px; height:6px; border-radius:50%; background: var(--sage); margin-top:9px; flex-shrink:0; }
+.cal-task .txt{ flex:1; outline:none; line-height:1.5; }
+.shop-item{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
+.shop-item:last-child{ border-bottom:none; }
+.shop-check{ width:20px; height:20px; border-radius:6px; border:1.5px solid var(--line-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; background: var(--card); }
+.shop-check svg{ width:12px; height:12px; opacity:0; }
+.shop-item.done .shop-check{ background: var(--sage); border-color: var(--sage); }
+.shop-item.done .shop-check svg{ opacity:1; color:#fff; }
+.shop-item.done .shop-txt{ text-decoration: line-through; color: var(--ink-faint); }
+.shop-txt{ flex:1; outline:none; }
+.small-add-row{ display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; }
+.small-add-row input{ flex:1; border:none; border-bottom:1px solid var(--line-strong); background:transparent; padding:6px 2px; font-family: var(--font-body); font-size:.92rem; outline:none; }
+.small-add-row input:focus{ border-color: var(--sage); }
+.pill-btn{ background: var(--sage); color:#fff; border:none; border-radius: 20px; padding: 9px 18px; font-size:.85rem; display:inline-flex; align-items:center; gap:6px; }
+.pill-btn:hover{ background: var(--sage-deep); }
+.pill-btn.ghost{ background:transparent; border:1px solid var(--line-strong); color: var(--ink-soft); }
+.pill-btn.ghost:hover{ border-color: var(--sage); color: var(--sage-deep); }
+.pill-btn.danger{ background: var(--danger); }
+.pill-btn.danger:hover{ background:#8a3e30; }
+.pill-btn svg{ width:15px; height:15px; }
+
+/* ---------- modal ---------- */
+.overlay{ position:fixed; inset:0; background: rgba(43,42,39,.32); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px; }
+.modal{ background: var(--card); border-radius: var(--radius); padding: 28px 26px; max-width: 360px; width:100%; }
+.modal h3{ font-size:1.15rem; margin-bottom:10px; }
+.modal p{ color: var(--ink-soft); font-size:.88rem; }
+.modal-actions{ display:flex; gap:10px; margin-top: 18px; justify-content:flex-end; }
+.modal input[type=text]{ width:100%; padding:10px 12px; border:1px solid var(--line-strong); border-radius:8px; font-family: var(--font-body); font-size:.95rem; margin-top:6px; outline:none; }
+.modal input[type=text]:focus{ border-color: var(--sage); }
+.admin-status{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.admin-status .avatar{ width:34px; height:34px; border-radius:50%; background: var(--sage-soft); color: var(--sage-deep); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:600; }
+
+@media (min-width: 620px){
+  .hero-grid{ flex-direction:row; }
+  .tile{ flex:1; }
+  .mini-grid{ grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px){
+  .topbar{ flex-direction: column; align-items: stretch; gap: 12px; }
+  .top-actions{ justify-content: flex-end; }
+  .seals-row{ gap: 5px; margin: 0 0 18px; flex-wrap: nowrap; }
+  .seal{ width: 48px; gap: 4px; }
+  .seal-ring{ width: 44px; height: 44px; }
+  .seal-ring svg{ width:16px; height:16px; }
+  .seal-ring img{ width:16px; height:16px; }
+  .seal-text{ font-size:.4rem; line-height:1.15; }
+}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<input type="file" id="hiddenPhotoInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+<script>
+/* =========================================================
+   Firebase — sustituye estos valores por los de tu proyecto
+   (Firebase Console > Configuración del proyecto > Tus apps)
+   Y sustituye ADMIN_UID por tu UID real de Google.
+   Mientras estén con estos valores de ejemplo, la app funciona
+   en modo local (localStorage) para que puedas probarla ya.
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
+};
+const ADMIN_UID = "PON_AQUI_TU_UID_DE_GOOGLE";
+
+let USE_FIREBASE = false;
+let currentUser = null;
+let authReady = false;
+let devAdminMode = false;
+
+function isAdmin(){
+  if(USE_FIREBASE) return !!(currentUser && currentUser.uid === ADMIN_UID);
+  return devAdminMode;
+}
+
+/* =========================================================
+   Datos en memoria (reflejo de Firestore o de localStorage)
+   ========================================================= */
+let ingredientesData = {};
+let formulasData = {};
+let etiquetasInciData = {};
+let categoriasGuiaData = {};
+let calendarioData = { secciones: [] };
+let listaCompraData = { items: [] };
+
+function getStoreFor(collection){
+  if(collection === "ingredientes") return ingredientesData;
+  if(collection === "formulas") return formulasData;
+  if(collection === "etiquetasInci") return etiquetasInciData;
+  if(collection === "categoriasGuia") return categoriasGuiaData;
+  return {};
+}
+
+const LS_KEYS = { ingredientes:"ln_ingredientes", formulas:"ln_formulas", etiquetasInci:"ln_etiquetasInci", categoriasGuia:"ln_categoriasGuia", calendario:"ln_calendario", lista:"ln_listaCompra", devAdmin:"ln_devAdmin" };
+
+const DEFAULT_INGREDIENTES = {
+  agua: { nombre: "Agua" },
+  alcohol70: { nombre: "Alcohol de 70º" },
+  vinagreLimpieza: { nombre: "Vinagre de limpieza" },
+  carbonatoSodico: { nombre: "Carbonato sódico" },
+  bicarbonatoSodico: { nombre: "Bicarbonato sódico" },
+  percarbonatoSodico: { nombre: "Percarbonato sódico" },
+  acidoCitrico: { nombre: "Ácido cítrico" },
+  jabonPotasico: { nombre: "Jabón potásico" },
+  jabonSodico: { nombre: "Jabón sódico" },
+  trapos: { nombre: "Trapos de fibras naturales" },
+  estropajos: { nombre: "Estropajos de fibras naturales" },
+  recipientes: { nombre: "Recipientes" }
+};
+function loadLocal(){
+  try{
+    const rawIngredientes = localStorage.getItem(LS_KEYS.ingredientes);
+    ingredientesData = rawIngredientes === null ? {} : (JSON.parse(rawIngredientes) || {});
+    let changed = rawIngredientes === null;
+    for(const key in DEFAULT_INGREDIENTES){
+      if(!(key in ingredientesData)){
+        ingredientesData[key] = DEFAULT_INGREDIENTES[key];
+        changed = true;
+      }
+    }
+    if(changed) persistLocal("ingredientes");
+  }catch(e){ ingredientesData = {}; }
+  try{ formulasData = JSON.parse(localStorage.getItem(LS_KEYS.formulas)) || {}; }catch(e){ formulasData = {}; }
+  try{ etiquetasInciData = JSON.parse(localStorage.getItem(LS_KEYS.etiquetasInci)) || {}; }catch(e){ etiquetasInciData = {}; }
+  try{ categoriasGuiaData = JSON.parse(localStorage.getItem(LS_KEYS.categoriasGuia)) || {}; }catch(e){ categoriasGuiaData = {}; }
+  try{ calendarioData = JSON.parse(localStorage.getItem(LS_KEYS.calendario)) || { secciones: [] }; }catch(e){ calendarioData = { secciones: [] }; }
+  try{ listaCompraData = JSON.parse(localStorage.getItem(LS_KEYS.lista)) || { items: [] }; }catch(e){ listaCompraData = { items: [] }; }
+  try{ devAdminMode = localStorage.getItem(LS_KEYS.devAdmin) === "1"; }catch(e){ devAdminMode = false; }
+}
+function persistLocal(key){
+  const map = { ingredientes: ingredientesData, formulas: formulasData, etiquetasInci: etiquetasInciData, categoriasGuia: categoriasGuiaData, calendario: calendarioData, lista: listaCompraData };
+  try{ localStorage.setItem(LS_KEYS[key], JSON.stringify(map[key])); }catch(e){}
+}
+
+/* --------- Firestore listeners (solo si USE_FIREBASE) --------- */
+function startFirestoreListeners(){
+  const db = firebase.firestore();
+  db.collection("ingredientes").onSnapshot(snap=>{
+    const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); ingredientesData = next; renderApp();
+  }, ()=>{});
+  db.collection("formulas").onSnapshot(snap=>{
+    const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); formulasData = next; renderApp();
+  }, ()=>{});
+  db.collection("etiquetasInci").onSnapshot(snap=>{
+    const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); etiquetasInciData = next; renderApp();
+  }, ()=>{});
+  db.collection("categoriasGuia").onSnapshot(snap=>{
+    const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); categoriasGuiaData = next; renderApp();
+  }, ()=>{});
+  db.collection("contenido").doc("calendario").onSnapshot(doc=>{
+    calendarioData = doc.exists ? doc.data() : { secciones: [] }; renderApp();
+  }, ()=>{});
+  db.collection("contenido").doc("listaCompra").onSnapshot(doc=>{
+    listaCompraData = doc.exists ? doc.data() : { items: [] }; renderApp();
+  }, ()=>{});
+}
+
+function initFirebase(){
+  const looksConfigured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("TU_");
+  if(!looksConfigured || typeof firebase === "undefined"){
+    loadLocal();
+    authReady = true;
+    renderApp();
+    return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    firebase.firestore().enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    USE_FIREBASE = true;
+    startFirestoreListeners();
+    firebase.auth().getRedirectResult().catch(()=>{});
+    firebase.auth().onAuthStateChanged(user=>{
+      currentUser = user;
+      authReady = true;
+      if(user){ upsertUserProfile(user); }
+      renderApp();
+    });
+  }catch(e){
+    USE_FIREBASE = false;
+    loadLocal();
+    authReady = true;
+    renderApp();
+  }
+}
+
+function signInWithGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).catch(()=>{
+    firebase.auth().signInWithRedirect(provider).catch(err=>{
+      openAlert({ title:"No se ha podido iniciar sesión", message: err.message || String(err) });
+    });
+  });
+}
+function signOutUser(){ firebase.auth().signOut(); }
+
+function upsertUserProfile(user){
+  const ref = firebase.firestore().collection("usuarios").doc(user.uid);
+  ref.get().then(doc=>{
+    const data = {
+      email: user.email || "",
+      nombre: user.displayName || "",
+      ultimoAcceso: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if(!doc.exists){ data.fechaAlta = firebase.firestore.FieldValue.serverTimestamp(); }
+    ref.set(data, {merge:true}).catch(()=>{});
+  }).catch(()=>{});
+}
+
+/* =========================================================
+   Persistencia genérica de colecciones
+   ========================================================= */
+function saveDoc(collection, id, data){
+  const store = getStoreFor(collection);
+  store[id] = { ...(store[id]||{}), ...data };
+  if(USE_FIREBASE){
+    firebase.firestore().collection(collection).doc(id).set(data, {merge:true}).catch(()=>{});
+  } else {
+    persistLocal(collection);
+  }
+}
+function deleteDoc(collection, id){
+  delete getStoreFor(collection)[id];
+  if(USE_FIREBASE){
+    firebase.firestore().collection(collection).doc(id).delete().catch(()=>{});
+  } else {
+    persistLocal(collection);
+  }
+}
+function saveContenido(key, data){
+  if(key === "calendario") calendarioData = data;
+  if(key === "lista") listaCompraData = data;
+  if(USE_FIREBASE){
+    const docId = key === "calendario" ? "calendario" : "listaCompra";
+    firebase.firestore().collection("contenido").doc(docId).set(data).catch(()=>{});
+  } else {
+    persistLocal(key);
+  }
+}
+
+function newId(){ return "x" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function nl2br(s){ return escapeHtml(s).replace(/\n/g,"<br>"); }
+
+/* =========================================================
+   Imágenes
+   ========================================================= */
+const PHOTO_ACCEPT = "image/jpeg,image/png,image/gif,image/webp";
+function readImageCompressed(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    if(!file.type || !file.type.startsWith("image/")){ reject(new Error("Ese archivo no es una imagen compatible.")); return; }
+    const reader = new FileReader();
+    reader.onerror = ()=> reject(new Error("No se ha podido leer el archivo."));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=> reject(new Error("No se ha podido abrir la imagen."));
+      img.onload = ()=>{
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if(w > maxDim || h > maxDim){
+          if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; } else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+let pendingPhotoTarget = null;
+document.getElementById("hiddenPhotoInput").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file || !pendingPhotoTarget) return;
+  readImageCompressed(file, 900, 0.75).then(dataUrl=>{
+    saveDoc(pendingPhotoTarget.collection, pendingPhotoTarget.id, { foto: dataUrl });
+    renderApp();
+  }).catch(err=> openAlert({ title:"No se ha podido procesar la imagen", message: err.message || "Prueba con otra foto." }));
+});
+
+/* =========================================================
+   Iconos (línea, estilo nórdico)
+   ========================================================= */
+function icon(name){
+  const icons = {
+    flask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6M10 2v6.3L4.6 17.8A2 2 0 0 0 6.4 21h11.2a2 2 0 0 0 1.8-3.2L14 8.3V2"/></svg>',
+    drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2s6.8 7.3 6.8 11.8a6.8 6.8 0 1 1-13.6 0C5.2 10.5 12 3.2 12 3.2z"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.2"/><line x1="3.5" y1="9.8" x2="20.5" y2="9.8"/><line x1="8" y1="3" x2="8" y2="6.6"/><line x1="16" y1="3" x2="16" y2="6.6"/></svg>',
+    checklist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="2"/><rect x="7" y="7.4" width="2.4" height="2.4" rx="0.5"/><line x1="11.5" y1="8.6" x2="17" y2="8.6"/><rect x="7" y="12.3" width="2.4" height="2.4" rx="0.5"/><line x1="11.5" y1="13.5" x2="17" y2="13.5"/><path d="M7.2 17.6l0.7 0.7 1.5-1.6"/><line x1="11.5" y1="18.4" x2="16" y2="18.4"/></svg>',
+    lockClosed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M7.8 10.5V7.2a4.2 4.2 0 0 1 8.4 0v3.3"/></svg>',
+    lockOpen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M7.8 10.5V7.2a4.2 4.2 0 0 1 7.9-2"/></svg>',
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.2l.8-3.6L15.9 5.5a1.8 1.8 0 0 1 2.6 0l1 1a1.8 1.8 0 0 1 0 2.6L8.4 20.2l-3.6.8z"/><path d="M14 7.4l2.6 2.6"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="12" y1="4.5" x2="12" y2="19.5"/><line x1="4.5" y1="12" x2="19.5" y2="12"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9.5 7V5.2a1.5 1.5 0 0 1 1.5-1.5h2a1.5 1.5 0 0 1 1.5 1.5V7M7 7l.7 12a2 2 0 0 0 2 1.9h4.6a2 2 0 0 0 2-1.9L17 7"/></svg>',
+    arrowLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5.5l-7 6.5 7 6.5"/></svg>',
+    externalLink: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3M14 4h6v6M20 4l-9 9"/></svg>',
+    photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10.5" r="1.6"/><path d="M4 16.5l4.5-4 3.5 3 3-2.5 4.5 3.5"/></svg>',
+    logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M15 16l4.5-4-4.5-4"/><line x1="19.2" y1="12" x2="9" y2="12"/></svg>',
+    tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.6V6.5A2.5 2.5 0 0 0 17.5 4h-6.1a2 2 0 0 0-1.4.6L3.6 11a2 2 0 0 0 0 2.8l6.6 6.6a2 2 0 0 0 2.8 0l6.4-6.4a2 2 0 0 0 .6-1.4Z"/><circle cx="14.2" cy="8.8" r="1.1"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.3l7 2.7v5.4c0 5-3 8.4-7 9.5-4-1.1-7-4.5-7-9.5V6l7-2.7z"/><path d="M9 12l2.2 2.2L15.5 9.5"/></svg>'
+  };
+  return icons[name] || "";
+}
+
+/* =========================================================
+   Estado de navegación
+   ========================================================= */
+let V = { screen: "home" };
+function go(screen, params){ V = { screen, ...(params||{}) }; window.scrollTo(0,0); renderApp(); }
+
+/* =========================================================
+   Render
+   ========================================================= */
+function requiresLogin(){ return USE_FIREBASE && !currentUser; }
+
+function renderApp(){
+  if(!authReady){ document.getElementById("app").innerHTML = ""; return; }
+  const app = document.getElementById("app");
+  if(requiresLogin()){
+    app.innerHTML = renderLoginGate() + renderModals();
+    return;
+  }
+  app.innerHTML = renderTopbar() + renderDevBanner() + renderScreen() + renderModals();
+}
+
+function renderLoginGate(){
+  return `
+  <div class="login-gate">
+    <h1>LimpiezaNatural</h1>
+    <p>Inicia sesión con tu cuenta de Google para entrar.</p>
+    <button class="pill-btn" data-action="do-signin">${icon("drop")}Entrar con Google</button>
+  </div>`;
+}
+
+function renderDevBanner(){
+  if(USE_FIREBASE) return "";
+  return `<div class="dev-banner"><strong>Modo local de pruebas</strong>Aún no está conectado Firebase, así que los datos se guardan solo en este navegador. Usa el candado para activar el modo edición de prueba.</div>`;
+}
+
+function renderTopbar(){
+  const adminOn = isAdmin();
+  return `
+  <div class="topbar">
+    <div class="brand" data-action="go-home">
+      <h1>LimpiezaNatural</h1>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" data-action="go-calendario" title="Calendario" aria-label="Calendario">${icon("calendar")}</button>
+      <button class="icon-btn" data-action="go-lista" title="Lista de la compra" aria-label="Lista de la compra">${icon("checklist")}</button>
+      ${USE_FIREBASE && currentUser ? `<button class="icon-btn" data-action="do-signout" title="Cerrar sesión" aria-label="Cerrar sesión">${icon("logout")}</button>` : ""}
+      <button class="icon-btn ${adminOn?"admin-on":""}" data-action="toggle-admin" title="${adminOn?"Sesión de administradora":"Acceso administradora"}" aria-label="Acceso administradora">${icon(adminOn?"lockOpen":"lockClosed")}</button>
+    </div>
+  </div>`;
+}
+
+function renderScreen(){
+  switch(V.screen){
+    case "home": return renderHome();
+    case "ingredientes": return renderListScreen("ingredientes");
+    case "ingrediente": return renderFichaSimple("ingredientes", V.id);
+    case "formulas": return renderCategoriasGuia();
+    case "categoriaFormulas": return renderFormulasEnCategoria(V.categoriaId);
+    case "formula": return renderFichaFormula(V.id);
+    case "etiquetasInci": return renderListScreen("etiquetasInci");
+    case "etiquetaInci": return renderFichaSimple("etiquetasInci", V.id);
+    case "calendario": return renderCalendario();
+    case "lista": return renderListaCompra();
+    default: return renderHome();
+  }
+}
+
+const SEALS = [
+  { img: "icons/vegano-icon.png", lines: ["100% origen vegetal"] },
+  { img: "icons/sin-petroquimicos-icon.png", lines: ["Sin", "petroquímicos"] },
+  { icon: "shield", lines: ["Sin disruptores", "endocrinos"] },
+  { img: "icons/cruelty-free-icon.png", lines: ["No testado", "en animales"] },
+  { img: "icons/medio-ambiente-icon.png", lines: ["Respetuoso con", "el medio ambiente"] }
+];
+function renderSeals(){
+  const stamps = SEALS.map(s=> `
+    <div class="seal">
+      <div class="seal-ring">${s.img ? `<img src="${s.img}" alt="">` : icon(s.icon)}</div>
+      <div class="seal-text">${s.lines.map(l=> escapeHtml(l)).join("<br>")}</div>
+    </div>`).join("");
+  return `<div class="seals-row">${stamps}</div>`;
+}
+
+function renderHome(){
+  return `
+  ${renderSeals()}
+  <div class="hero-grid">
+    <button class="tile" data-action="go-ingredientes">
+      <div class="tile-icon">${icon("flask")}</div>
+      <h2>Ingredientes esenciales</h2>
+      <p>Las bases: qué son, para qué sirven y cómo usarlas.</p>
+    </button>
+    <button class="tile" data-action="go-formulas">
+      <div class="tile-icon">${icon("drop")}</div>
+      <h2>Guía de limpieza</h2>
+      <p>Alternativas caseras o comerciales.</p>
+    </button>
+    <button class="tile" data-action="go-etiquetasInci">
+      <div class="tile-icon">${icon("tag")}</div>
+      <h2>Etiquetas INCI</h2>
+      <p>Aprende a leer los ingredientes de tus productos.</p>
+    </button>
+  </div>
+  <button class="credits-link" data-action="open-credits">Créditos</button>`;
+}
+
+const ICON_CREDITS = [
+  '<a href="https://www.flaticon.es/iconos-gratis/vegano" title="vegano iconos">Vegano iconos creados por Magnific - Flaticon</a>',
+  '<a href="https://www.flaticon.es/iconos-gratis/libre-de-crueldad" title="libre de crueldad iconos">Libre de crueldad iconos creados por Magnific - Flaticon</a>',
+  '<a href="https://www.flaticon.es/iconos-gratis/sustentabilidad" title="sustentabilidad iconos">Sustentabilidad iconos creados por Magnific - Flaticon</a>',
+  '<a href="https://www.flaticon.es/iconos-gratis/sin-grasas-trans" title="sin grasas trans iconos">Sin grasas trans iconos creados por Soni Sokell - Flaticon</a>'
+];
+function renderCreditsModalHtml(){
+  return `<div class="overlay" data-action="close-modal">
+    <div class="modal" data-stop="1">
+      <h3>Créditos de iconos</h3>
+      <p style="font-size:.8rem;">${ICON_CREDITS.join("<br>")}</p>
+      <div class="modal-actions">
+        <button class="pill-btn" data-action="close-modal">Cerrar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- listados genéricos ---------- */
+const LIST_META = {
+  ingredientes: { title: "Ingredientes esenciales", singular: "ingrediente", back: "home", collection: "ingredientes", openScreen: "ingrediente", emptyIcon: "flask" },
+  etiquetasInci: { title: "Etiquetas INCI", singular: "etiqueta INCI", back: "home", collection: "etiquetasInci", openScreen: "etiquetaInci", emptyIcon: "tag" }
+};
+const INGREDIENTES_ORDER = ["agua","alcohol70","vinagreLimpieza","carbonatoSodico","bicarbonatoSodico","percarbonatoSodico","acidoCitrico","jabonPotasico","jabonSodico","trapos","estropajos","recipientes"];
+function renderListScreen(kind){
+  const meta = LIST_META[kind];
+  const data = getStoreFor(meta.collection);
+  const items = Object.entries(data).sort((a,b)=>{
+    if(kind === "ingredientes"){
+      const ia = INGREDIENTES_ORDER.indexOf(a[0]), ib = INGREDIENTES_ORDER.indexOf(b[0]);
+      if(ia !== -1 && ib !== -1) return ia - ib;
+      if(ia !== -1) return -1;
+      if(ib !== -1) return 1;
+    }
+    return (a[1].nombre||"").localeCompare(b[1].nombre||"", "es");
+  });
+  const adminOn = isAdmin();
+  let cardsHtml = items.map(([id, d])=> `
+    <button class="card" data-action="open-${meta.openScreen}" data-id="${id}">
+      ${d.foto ? `<img class="card-thumb" src="${d.foto}" alt="">` : `<div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>`}
+      <h3>${escapeHtml(d.nombre || "Sin nombre")}</h3>
+      ${d.subtitulo ? `<div class="card-sub">${escapeHtml(d.subtitulo)}</div>` : ""}
+    </button>`).join("");
+  if(adminOn){
+    cardsHtml += `<button class="add-tile" data-action="add-${kind}">${icon("plus")}<span>Añadir ${meta.singular}</span></button>`;
+  }
+  if(items.length === 0 && !adminOn){
+    return `
+    <button class="back-btn" data-action="go-home">${icon("arrowLeft")}Volver</button>
+    <div class="section-head"><h1>${meta.title}</h1></div>
+    <div class="empty-state">${icon(meta.emptyIcon)}<p>Todavía no hay nada aquí.</p></div>`;
+  }
+  return `
+  <button class="back-btn" data-action="go-home">${icon("arrowLeft")}Volver</button>
+  <div class="section-head"><h1>${meta.title}</h1></div>
+  <div class="grid-cards">${cardsHtml}</div>`;
+}
+
+/* ---------- guía de limpieza: categorías ---------- */
+function renderCategoriasGuia(){
+  const adminOn = isAdmin();
+  const cats = Object.entries(categoriasGuiaData).sort((a,b)=> (a[1].nombre||"").localeCompare(b[1].nombre||"", "es"));
+  const catIds = new Set(cats.map(([id])=>id));
+  const sinCategoria = Object.values(formulasData).some(d=> !d.categoriaId || !catIds.has(d.categoriaId));
+
+  let cardsHtml = cats.map(([id,c])=> `
+    <button class="card" data-action="open-categoriaFormulas" data-categoria-id="${id}">
+      <div class="card-thumb-placeholder">${icon("tag")}</div>
+      <h3>${escapeHtml(c.nombre || "Sin nombre")}</h3>
+    </button>`).join("");
+
+  if(sinCategoria){
+    cardsHtml += `
+    <button class="card" data-action="open-categoriaFormulas" data-categoria-id="__sin__">
+      <div class="card-thumb-placeholder">${icon("tag")}</div>
+      <h3>Sin categoría</h3>
+    </button>`;
+  }
+
+  if(adminOn){
+    cardsHtml += `<button class="add-tile" data-action="add-categoria">${icon("plus")}<span>Añadir categoría</span></button>`;
+  }
+
+  if(cats.length === 0 && !sinCategoria && !adminOn){
+    return `
+    <button class="back-btn" data-action="go-home">${icon("arrowLeft")}Volver</button>
+    <div class="section-head"><h1>Guía de limpieza</h1></div>
+    <div class="empty-state">${icon("drop")}<p>Todavía no hay nada aquí.</p></div>`;
+  }
+
+  return `
+  <button class="back-btn" data-action="go-home">${icon("arrowLeft")}Volver</button>
+  <div class="section-head"><h1>Guía de limpieza</h1></div>
+  <div class="grid-cards">${cardsHtml}</div>`;
+}
+
+function renderFormulasEnCategoria(categoriaId){
+  const adminOn = isAdmin();
+  const cat = categoriaId !== "__sin__" ? categoriasGuiaData[categoriaId] : null;
+  const title = cat ? cat.nombre : "Sin categoría";
+
+  const items = Object.entries(formulasData).filter(([id,d])=>{
+    if(categoriaId === "__sin__") return !d.categoriaId || !categoriasGuiaData[d.categoriaId];
+    return d.categoriaId === categoriaId;
+  }).sort((a,b)=> (a[1].nombre||"").localeCompare(b[1].nombre||"", "es"));
+
+  let cardsHtml = items.map(([id, d])=> `
+    <button class="card" data-action="open-formula" data-id="${id}">
+      ${d.foto ? `<img class="card-thumb" src="${d.foto}" alt="">` : `<div class="card-thumb-placeholder">${icon("drop")}</div>`}
+      <h3>${escapeHtml(d.nombre || "Sin nombre")}</h3>
+    </button>`).join("");
+
+  if(adminOn){
+    cardsHtml += `<button class="add-tile" data-action="add-formula-categoria" data-categoria-id="${categoriaId}">${icon("plus")}<span>Añadir fórmula</span></button>`;
+  }
+
+  const deleteBtn = (adminOn && cat) ? `<button class="text-btn" data-action="delete-categoria" data-id="${categoriaId}">${icon("trash")}Eliminar categoría</button>` : "";
+
+  if(items.length === 0 && !adminOn){
+    return `
+    <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
+    <div class="section-head"><h1>${escapeHtml(title)}</h1></div>
+    <div class="empty-state">${icon("drop")}<p>Todavía no hay nada aquí.</p></div>`;
+  }
+
+  return `
+  <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
+  <div class="section-head"><h1>${escapeHtml(title)}</h1>${deleteBtn}</div>
+  <div class="grid-cards">${cardsHtml}</div>`;
+}
+
+/* ---------- ficha: ingrediente ---------- */
+const SIMPLE_FICHA_CONFIG = {
+  ingredientes: {
+    backScreen: "ingredientes", backLabel: "Volver a ingredientes",
+    titlePlaceholder: "Nombre del ingrediente", subtituloPlaceholder: "Subtítulo o nombre técnico",
+    deleteAction: "delete-ingrediente",
+    fields: [
+      { label:"Descripción", field:"descripcion", placeholder:"Qué es y de dónde viene" },
+      { label:"Para qué sirve", field:"usos", placeholder:"Usos principales en limpieza" },
+      { label:"Precauciones", field:"precauciones", placeholder:"Mezclas a evitar, ventilación, guantes..." },
+      { label:"Dónde comprarlo", field:"dondeComprar", placeholder:"Tienda, formato, enlace..." }
+    ]
+  },
+  etiquetasInci: {
+    backScreen: "etiquetasInci", backLabel: "Volver a etiquetas INCI",
+    titlePlaceholder: "Nombre INCI", subtituloPlaceholder: "Nombre común o categoría",
+    deleteAction: "delete-etiquetaInci",
+    fields: [
+      { label:"Qué es", field:"descripcion", placeholder:"Qué es y para qué se usa" },
+      { label:"Alertas", field:"precauciones", placeholder:"Disruptor endocrino, irritante, alérgeno..." },
+      { label:"Dónde aparece", field:"usos", placeholder:"En qué tipo de productos se encuentra" }
+    ]
+  }
+};
+function renderFichaSimple(collection, id){
+  const cfg = SIMPLE_FICHA_CONFIG[collection];
+  const d = getStoreFor(collection)[id];
+  if(!d) return `<button class="back-btn" data-action="go-${cfg.backScreen}">${icon("arrowLeft")}Volver</button><div class="empty-state"><p>Esta ficha ya no existe.</p></div>`;
+  const adminOn = isAdmin();
+  const ed = adminOn ? "editable" : "";
+  const editAttr = adminOn ? "true" : "false";
+  return `
+  <button class="back-btn" data-action="go-${cfg.backScreen}">${icon("arrowLeft")}${cfg.backLabel}</button>
+  <div class="ficha-head">
+    <h1 class="ficha-title ${ed}" contenteditable="${editAttr}" data-field="nombre" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.titlePlaceholder}">${escapeHtml(d.nombre||"")}</h1>
+  </div>
+  <div class="field-value ${ed}" contenteditable="${editAttr}" data-field="subtitulo" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.subtituloPlaceholder}" style="color:var(--ink-soft);margin-bottom:14px;">${escapeHtml(d.subtitulo||"")}</div>
+  ${renderFichaPhoto(d, collection, id, adminOn)}
+  ${cfg.fields.map(f=> renderField(f.label, f.field, d[f.field], collection, id, adminOn, f.placeholder)).join("")}
+  ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="${cfg.deleteAction}" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
+  `;
+}
+
+function renderFichaPhoto(d, collection, id, adminOn){
+  if(d.foto){
+    return `<div class="ficha-photo-wrap"><img src="${d.foto}" alt=""></div>
+      ${adminOn ? `<div style="margin:-14px 0 18px;"><button class="text-btn" data-action="change-photo" data-collection="${collection}" data-id="${id}">${icon("photo")}Cambiar foto</button></div>` : ""}`;
+  }
+  if(adminOn){
+    return `<button class="ficha-photo-empty" style="width:100%;border:none;" data-action="change-photo" data-collection="${collection}" data-id="${id}">${icon("photo")}<span>Añadir una foto</span></button>`;
+  }
+  return "";
+}
+
+function renderField(label, field, value, collection, id, adminOn, placeholder){
+  if(!adminOn && !value) return "";
+  const ed = adminOn ? "editable" : "";
+  const editAttr = adminOn ? "true" : "false";
+  return `
+  <div class="field-block">
+    <span class="field-label">${label}</span>
+    <div class="field-value ${ed}" contenteditable="${editAttr}" data-field="${field}" data-collection="${collection}" data-id="${id}" data-placeholder="${escapeHtml(placeholder||"")}">${escapeHtml(value||"")}</div>
+  </div>`;
+}
+
+/* ---------- ficha: fórmula ---------- */
+function renderFichaFormula(id){
+  const d = formulasData[id];
+  if(!d) return `<button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver</button><div class="empty-state"><p>Esta ficha ya no existe.</p></div>`;
+  const adminOn = isAdmin();
+  const ed = adminOn ? "editable" : "";
+  const editAttr = adminOn ? "true" : "false";
+  const receta = d.receta || {};
+  const producto = d.producto || {};
+  const cantidad = parseFloat(producto.cantidad);
+  const precio = parseFloat(producto.precioEnvase);
+  let priceLine = "";
+  if(cantidad > 0 && precio > 0){
+    const unidad = producto.unidad || "ml";
+    let perBase, baseLabel;
+    if(unidad === "ml"){ perBase = precio / (cantidad/1000); baseLabel = "litro"; }
+    else if(unidad === "L"){ perBase = precio / cantidad; baseLabel = "litro"; }
+    else if(unidad === "g"){ perBase = precio / (cantidad/1000); baseLabel = "kg"; }
+    else { perBase = precio / cantidad; baseLabel = "kg"; }
+    priceLine = `<div class="price-highlight"><span class="num">${perBase.toFixed(2)} €</span><span class="lbl">por ${baseLabel}</span></div>`;
+  }
+  const hasReceta = adminOn || receta.pasos || receta.ingredientes || receta.notas;
+  const hasProducto = adminOn || producto.marca || producto.tienda || producto.link;
+  return `
+  <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
+  <div class="ficha-head">
+    <h1 class="ficha-title ${ed}" contenteditable="${editAttr}" data-field="nombre" data-collection="formulas" data-id="${id}" data-placeholder="Nombre de la fórmula">${escapeHtml(d.nombre||"")}</h1>
+  </div>
+  ${renderCategoriaSelectFormula(d, id, adminOn)}
+  ${renderFichaPhoto(d, "formulas", id, adminOn)}
+
+  ${hasReceta ? `
+  <div class="subsection">
+    <h4>Receta casera</h4>
+    ${renderSubField("Ingredientes", "ingredientes", receta.ingredientes, "formulas", id, "receta", adminOn, "Qué lleva y en qué cantidades")}
+    ${renderSubField("Preparación", "pasos", receta.pasos, "formulas", id, "receta", adminOn, "Pasos para hacerla")}
+    ${renderSubField("Notas", "notas", receta.notas, "formulas", id, "receta", adminOn, "Conservación, variantes...")}
+  </div>` : ""}
+
+  ${hasProducto ? `
+  <div class="subsection">
+    <h4>Producto que compro</h4>
+    <div class="mini-grid">
+      ${renderSubField("Marca / producto", "marca", producto.marca, "formulas", id, "producto", adminOn, "Nombre del producto")}
+      ${renderSubField("Tienda", "tienda", producto.tienda, "formulas", id, "producto", adminOn, "Dónde lo compro")}
+      ${renderSubField("Cantidad del envase", "cantidad", producto.cantidad, "formulas", id, "producto", adminOn, "Ej. 750", "number")}
+      ${renderUnidadField(producto.unidad, id, adminOn)}
+      ${renderSubField("Precio del envase (€)", "precioEnvase", producto.precioEnvase, "formulas", id, "producto", adminOn, "Ej. 3.20", "number")}
+    </div>
+    ${priceLine}
+    ${producto.link || adminOn ? `<div class="field-block"><span class="field-label">Enlace</span><div class="field-value ${ed}" contenteditable="${editAttr}" data-field="link" data-collection="formulas" data-id="${id}" data-sub="producto" data-placeholder="https://...">${escapeHtml(producto.link||"")}</div>${producto.link ? `<a href="${escapeHtml(producto.link)}" target="_blank" rel="noopener" class="text-btn" style="margin-top:6px;">${icon("externalLink")}Abrir enlace</a>` : ""}</div>` : ""}
+  </div>` : ""}
+
+  ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="delete-formula" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
+  `;
+}
+
+function renderSubField(label, field, value, collection, id, sub, adminOn, placeholder, type){
+  if(!adminOn && !value) return "";
+  const ed = adminOn ? "editable" : "";
+  const editAttr = adminOn ? "true" : "false";
+  return `
+  <div class="field-block">
+    <span class="field-label">${label}</span>
+    <div class="field-value ${ed}" contenteditable="${editAttr}" data-field="${field}" data-collection="${collection}" data-id="${id}" data-sub="${sub}" data-input-type="${type||"text"}" data-placeholder="${escapeHtml(placeholder||"")}">${escapeHtml(value||"")}</div>
+  </div>`;
+}
+function renderCategoriaSelectFormula(d, id, adminOn){
+  if(!adminOn){
+    if(!d.categoriaId || !categoriasGuiaData[d.categoriaId]) return "";
+    return `<div class="card-sub" style="margin:-8px 0 14px;">${escapeHtml(categoriasGuiaData[d.categoriaId].nombre)}</div>`;
+  }
+  const cats = Object.entries(categoriasGuiaData).sort((a,b)=> (a[1].nombre||"").localeCompare(b[1].nombre||"", "es"));
+  const current = d.categoriaId || "";
+  const opts = `<option value="">Sin categoría</option>` + cats.map(([cid,c])=> `<option value="${cid}" ${cid===current?"selected":""}>${escapeHtml(c.nombre)}</option>`).join("");
+  return `
+  <div class="field-block">
+    <span class="field-label">Categoría</span>
+    <select class="field-value" data-action="set-categoria-formula" data-id="${id}">${opts}</select>
+  </div>`;
+}
+function renderUnidadField(unidad, id, adminOn){
+  unidad = unidad || "ml";
+  if(!adminOn){
+    return "";
+  }
+  const opts = ["ml","L","g","kg"].map(u=> `<option value="${u}" ${u===unidad?"selected":""}>${u}</option>`).join("");
+  return `
+  <div class="field-block">
+    <span class="field-label">Unidad</span>
+    <select class="field-value" data-action="set-unidad" data-id="${id}">${opts}</select>
+  </div>`;
+}
+
+/* ---------- calendario ---------- */
+function renderCalendario(){
+  const adminOn = isAdmin();
+  const secciones = calendarioData.secciones || [];
+  let body;
+  if(secciones.length === 0){
+    body = adminOn ? "" : `<div class="empty-state">${icon("calendar")}<p>Todavía no hay nada planificado.</p></div>`;
+  } else {
+    body = secciones.map((sec, si)=> `
+      <div class="cal-section">
+        <div class="cal-section-head">
+          <h3 ${adminOn?'contenteditable="true"':''} class="${adminOn?'editable':''}" data-action-blur="cal-titulo" data-si="${si}">${escapeHtml(sec.titulo||"")}</h3>
+          ${adminOn ? `<button class="text-btn" data-action="cal-del-seccion" data-si="${si}">${icon("trash")}</button>` : ""}
+        </div>
+        ${(sec.tareas||[]).map((t,ti)=> `
+          <div class="cal-task">
+            <div class="dot"></div>
+            <div class="txt" ${adminOn?'contenteditable="true"':''} data-action-blur="cal-tarea" data-si="${si}" data-ti="${ti}">${escapeHtml(t)}</div>
+            ${adminOn ? `<button class="text-btn" data-action="cal-del-tarea" data-si="${si}" data-ti="${ti}">${icon("trash")}</button>` : ""}
+          </div>`).join("")}
+        ${adminOn ? `<div class="small-add-row"><input type="text" placeholder="Añadir tarea..." data-action-enter="cal-add-tarea" data-si="${si}"><button class="text-btn" data-action="cal-add-tarea-btn" data-si="${si}">${icon("plus")}</button></div>` : ""}
+      </div>`).join("");
+  }
+  return `
+  <button class="back-btn" data-action="go-home">${icon("arrowLeft")}Volver</button>
+  <div class="section-head"><h1>Calendario</h1></div>
+  ${body}
+  ${adminOn ? `<div class="small-add-row"><input type="text" placeholder="Nueva sección (ej. Semanal)..." data-action-enter="cal-add-seccion"><button class="pill-btn" data-action="cal-add-seccion-btn">${icon("plus")}Sección</button></div>` : ""}
+  `;
+}
+
+/* ---------- lista de la compra ---------- */
+function renderListaCompra(){
+  const adminOn = isAdmin();
+  const items = listaCompraData.items || [];
+  let body;
+  if(items.length === 0){
+    body = adminOn ? "" : `<div class="empty-state">${icon("checklist")}<p>La lista está vacía.</p></div>`;
+  } else {
+    body = `<div class="cal-section">` + items.map((it, i)=> `
+      <div class="shop-item ${it.marcada?'done':''}">
+        <button class="shop-check" data-action="${adminOn?'shop-toggle':''}" data-i="${i}">${icon("check")}</button>
+        <div class="shop-txt" ${adminOn?'contenteditable="true"':''} data-action-blur="shop-texto" data-i="${i}">${escapeHtml(it.texto||"")}</div>
+        ${adminOn ? `<button class="text-btn" data-action="shop-del" data-i="${i}">${icon("trash")}</button>` : ""}
+      </div>`).join("") + `</div>`;
+  }
+  return `
+  <button class="back-btn" data-action="go-home">${icon("arrowLeft")}Volver</button>
+  <div class="section-head"><h1>Lista de la compra</h1></div>
+  ${body}
+  ${adminOn ? `<div class="small-add-row"><input type="text" placeholder="Añadir producto..." data-action-enter="shop-add"><button class="pill-btn" data-action="shop-add-btn">${icon("plus")}Añadir</button></div>` : ""}
+  `;
+}
+
+/* ---------- modales genéricos ---------- */
+function openPrompt(opts){ V.promptModal = opts; renderApp(); const el=document.getElementById("promptInput"); if(el){ el.focus(); } }
+function openConfirm(opts){ V.confirmModal = opts; renderApp(); }
+function openAlert(opts){ V.alertModal = opts; renderApp(); }
+function closeAllModals(){ V.showAdminModal = false; V.promptModal = null; V.confirmModal = null; V.alertModal = null; V.creditsModal = false; }
+
+function submitPromptModal(){
+  const input = document.getElementById("promptInput");
+  if(!input) return;
+  const v = input.value.trim();
+  if(!v) return;
+  const pm = V.promptModal;
+  if(pm.submitAction === "create-ingrediente"){ const nid = newId(); saveDoc("ingredientes", nid, {nombre:v}); closeAllModals(); go("ingrediente", {id:nid}); }
+  if(pm.submitAction === "create-formula"){
+    const nid = newId();
+    const data = {nombre:v};
+    if(pm.categoriaId && pm.categoriaId !== "__sin__") data.categoriaId = pm.categoriaId;
+    saveDoc("formulas", nid, data);
+    closeAllModals(); go("formula", {id:nid});
+  }
+  if(pm.submitAction === "create-etiquetaInci"){ const nid = newId(); saveDoc("etiquetasInci", nid, {nombre:v}); closeAllModals(); go("etiquetaInci", {id:nid}); }
+  if(pm.submitAction === "create-categoria"){ const nid = newId(); saveDoc("categoriasGuia", nid, {nombre:v}); closeAllModals(); renderApp(); }
+}
+
+function renderModals(){
+  if(V.promptModal) return renderPromptModalHtml(V.promptModal);
+  if(V.confirmModal) return renderConfirmModalHtml(V.confirmModal);
+  if(V.alertModal) return renderAlertModalHtml(V.alertModal);
+  if(V.showAdminModal) return renderAdminModalHtml();
+  if(V.creditsModal) return renderCreditsModalHtml();
+  return "";
+}
+
+function renderPromptModalHtml(pm){
+  return `<div class="overlay" data-action="close-modal">
+    <div class="modal" data-stop="1">
+      <h3>${escapeHtml(pm.title)}</h3>
+      <input type="text" id="promptInput" placeholder="${escapeHtml(pm.placeholder||"")}" autocomplete="off">
+      <div class="modal-actions">
+        <button class="pill-btn ghost" data-action="close-modal">Cancelar</button>
+        <button class="pill-btn" data-action="prompt-submit">Crear</button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderConfirmModalHtml(cm){
+  return `<div class="overlay" data-action="close-modal">
+    <div class="modal" data-stop="1">
+      <h3>${escapeHtml(cm.title)}</h3>
+      <p>${escapeHtml(cm.message||"")}</p>
+      <div class="modal-actions">
+        <button class="pill-btn ghost" data-action="close-modal">Cancelar</button>
+        <button class="pill-btn danger" data-action="confirm-yes">Eliminar</button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderAlertModalHtml(am){
+  return `<div class="overlay" data-action="close-modal">
+    <div class="modal" data-stop="1">
+      <h3>${escapeHtml(am.title||"Aviso")}</h3>
+      <p>${escapeHtml(am.message||"")}</p>
+      <div class="modal-actions">
+        <button class="pill-btn" data-action="close-modal">Entendido</button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderAdminModalHtml(){
+  if(USE_FIREBASE){
+    if(currentUser){
+      const isReal = currentUser.uid === ADMIN_UID;
+      return `<div class="overlay" data-action="close-modal">
+        <div class="modal" data-stop="1">
+          <div class="admin-status">
+            <div class="avatar">${escapeHtml((currentUser.displayName||currentUser.email||"?").slice(0,1).toUpperCase())}</div>
+            <div>
+              <div style="font-size:.92rem;">${escapeHtml(currentUser.displayName||currentUser.email||"")}</div>
+              <div style="font-size:.78rem;color:var(--ink-faint);">${isReal ? "Administradora" : "Sin permisos de edición"}</div>
+            </div>
+          </div>
+          <p>${isReal ? "Tienes acceso completo de edición en el cuaderno." : `Esta cuenta no tiene permisos de edición. Para autorizarla, copia este UID en la constante ADMIN_UID del código: <code style="user-select:all;">${escapeHtml(currentUser.uid)}</code>`}</p>
+          <div class="modal-actions">
+            <button class="pill-btn ghost" data-action="close-modal">Cerrar</button>
+            <button class="pill-btn" data-action="do-signout">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="overlay" data-action="close-modal">
+      <div class="modal" data-stop="1">
+        <h3>Acceso administradora</h3>
+        <p>Inicia sesión con la cuenta de Google autorizada para editar el cuaderno.</p>
+        <div class="modal-actions">
+          <button class="pill-btn ghost" data-action="close-modal">Cancelar</button>
+          <button class="pill-btn" data-action="do-signin">Entrar con Google</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return `<div class="overlay" data-action="close-modal">
+    <div class="modal" data-stop="1">
+      <h3>Modo local de pruebas</h3>
+      <p>Firebase aún no está conectado. Puedes activar un modo edición de prueba para ver cómo funcionará, guardado solo en este navegador.</p>
+      <div class="modal-actions">
+        <button class="pill-btn ghost" data-action="close-modal">Cancelar</button>
+        <button class="pill-btn" data-action="do-dev-toggle">${devAdminMode ? "Desactivar edición" : "Activar edición de prueba"}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   Delegación de eventos
+   ========================================================= */
+const appEl = document.getElementById("app");
+
+appEl.addEventListener("click", e=>{
+  if(e.target.closest("[data-stop]")) { /* clicks inside modal card don't close it */ }
+  const overlay = e.target.closest(".overlay");
+  if(overlay && e.target === overlay){ V.showAdminModal = false; renderApp(); return; }
+
+  const btn = e.target.closest("[data-action]");
+  if(!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+
+  switch(action){
+    case "go-home": go("home"); break;
+    case "go-ingredientes": go("ingredientes"); break;
+    case "go-formulas": go("formulas"); break;
+    case "go-etiquetasInci": go("etiquetasInci"); break;
+    case "go-calendario": go("calendario"); break;
+    case "go-lista": go("lista"); break;
+    case "open-ingrediente": go("ingrediente", {id}); break;
+    case "open-formula": go("formula", {id}); break;
+    case "open-etiquetaInci": go("etiquetaInci", {id}); break;
+    case "open-categoriaFormulas": go("categoriaFormulas", {categoriaId: btn.dataset.categoriaId}); break;
+    case "toggle-admin": V.showAdminModal = true; renderApp(); break;
+    case "open-credits": V.creditsModal = true; renderApp(); break;
+    case "close-modal": closeAllModals(); renderApp(); break;
+    case "do-signin": signInWithGoogle(); break;
+    case "do-signout": signOutUser(); closeAllModals(); break;
+    case "do-dev-toggle":
+      devAdminMode = !devAdminMode;
+      try{ localStorage.setItem(LS_KEYS.devAdmin, devAdminMode ? "1" : "0"); }catch(err){}
+      closeAllModals(); renderApp(); break;
+    case "prompt-submit": submitPromptModal(); break;
+    case "confirm-yes": {
+      const cm = V.confirmModal;
+      if(cm){
+        if(cm.confirmAction === "confirm-delete-ingrediente"){ deleteDoc("ingredientes", cm.targetId); closeAllModals(); go("ingredientes"); }
+        if(cm.confirmAction === "confirm-delete-formula"){ deleteDoc("formulas", cm.targetId); closeAllModals(); go("formulas"); }
+        if(cm.confirmAction === "confirm-delete-etiquetaInci"){ deleteDoc("etiquetasInci", cm.targetId); closeAllModals(); go("etiquetasInci"); }
+        if(cm.confirmAction === "confirm-delete-categoria"){ deleteDoc("categoriasGuia", cm.targetId); closeAllModals(); go("formulas"); }
+      }
+      break;
+    }
+    case "add-ingredientes":
+      openPrompt({ title:"Nuevo ingrediente", placeholder:"Ej. Vinagre de limpieza", submitAction:"create-ingrediente" });
+      break;
+    case "add-categoria":
+      openPrompt({ title:"Nueva categoría", placeholder:"Ej. Limpieza de cocina", submitAction:"create-categoria" });
+      break;
+    case "add-formula-categoria":
+      openPrompt({ title:"Nueva fórmula", placeholder:"Ej. Jabón lavavajillas a mano", submitAction:"create-formula", categoriaId: btn.dataset.categoriaId });
+      break;
+    case "add-etiquetasInci":
+      openPrompt({ title:"Nueva etiqueta INCI", placeholder:"Ej. Sodium Laureth Sulfate", submitAction:"create-etiquetaInci" });
+      break;
+    case "delete-ingrediente":
+      openConfirm({ title:"¿Eliminar esta ficha?", message:"Esta acción no se puede deshacer.", confirmAction:"confirm-delete-ingrediente", targetId:id });
+      break;
+    case "delete-formula":
+      openConfirm({ title:"¿Eliminar esta ficha?", message:"Esta acción no se puede deshacer.", confirmAction:"confirm-delete-formula", targetId:id });
+      break;
+    case "delete-etiquetaInci":
+      openConfirm({ title:"¿Eliminar esta ficha?", message:"Esta acción no se puede deshacer.", confirmAction:"confirm-delete-etiquetaInci", targetId:id });
+      break;
+    case "delete-categoria":
+      openConfirm({ title:"¿Eliminar esta categoría?", message:"Las fórmulas que contenga pasarán a \"Sin categoría\". Esta acción no se puede deshacer.", confirmAction:"confirm-delete-categoria", targetId:id });
+      break;
+    case "change-photo":
+      pendingPhotoTarget = { collection: btn.dataset.collection, id: btn.dataset.id };
+      document.getElementById("hiddenPhotoInput").click();
+      break;
+    case "set-unidad": break; // handled on change event
+    case "set-categoria-formula": break; // handled on change event
+    case "cal-del-seccion": {
+      const si = parseInt(btn.dataset.si,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones.splice(si,1);
+      saveContenido("calendario", data); renderApp();
+      break;
+    }
+    case "cal-del-tarea": {
+      const si = parseInt(btn.dataset.si,10), ti = parseInt(btn.dataset.ti,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones[si].tareas.splice(ti,1);
+      saveContenido("calendario", data); renderApp();
+      break;
+    }
+    case "cal-add-seccion-btn": addCalSeccion(btn.parentElement.querySelector("input")); break;
+    case "cal-add-tarea-btn": {
+      const si = parseInt(btn.dataset.si,10);
+      addCalTarea(si, btn.parentElement.querySelector("input"));
+      break;
+    }
+    case "shop-toggle": {
+      const i = parseInt(btn.dataset.i,10);
+      const data = JSON.parse(JSON.stringify(listaCompraData));
+      data.items[i].marcada = !data.items[i].marcada;
+      saveContenido("lista", data); renderApp();
+      break;
+    }
+    case "shop-del": {
+      const i = parseInt(btn.dataset.i,10);
+      const data = JSON.parse(JSON.stringify(listaCompraData));
+      data.items.splice(i,1);
+      saveContenido("lista", data); renderApp();
+      break;
+    }
+    case "shop-add-btn": addShopItem(btn.parentElement.querySelector("input")); break;
+  }
+});
+
+appEl.addEventListener("change", e=>{
+  if(e.target.matches('select[data-action="set-unidad"]')){
+    const id = e.target.dataset.id;
+    const d = formulasData[id];
+    const producto = { ...(d.producto||{}), unidad: e.target.value };
+    saveDoc("formulas", id, { producto });
+    renderApp();
+  }
+  if(e.target.matches('select[data-action="set-categoria-formula"]')){
+    const id = e.target.dataset.id;
+    saveDoc("formulas", id, { categoriaId: e.target.value || null });
+    renderApp();
+  }
+});
+
+appEl.addEventListener("keydown", e=>{
+  if(e.key === "Enter" && e.target.id === "promptInput"){ e.preventDefault(); submitPromptModal(); return; }
+  if(e.key === "Enter" && e.target.matches("input[data-action-enter]")){
+    e.preventDefault();
+    const action = e.target.dataset.actionEnter;
+    if(action === "cal-add-seccion") addCalSeccion(e.target);
+    if(action === "cal-add-tarea") addCalTarea(parseInt(e.target.dataset.si,10), e.target);
+    if(action === "shop-add") addShopItem(e.target);
+  }
+});
+
+function addCalSeccion(input){
+  const v = input.value.trim();
+  if(!v) return;
+  const data = JSON.parse(JSON.stringify(calendarioData));
+  data.secciones.push({ titulo: v, tareas: [] });
+  saveContenido("calendario", data);
+  renderApp();
+}
+function addCalTarea(si, input){
+  const v = input.value.trim();
+  if(!v) return;
+  const data = JSON.parse(JSON.stringify(calendarioData));
+  data.secciones[si].tareas.push(v);
+  saveContenido("calendario", data);
+  renderApp();
+}
+function addShopItem(input){
+  const v = input.value.trim();
+  if(!v) return;
+  const data = JSON.parse(JSON.stringify(listaCompraData));
+  data.items.push({ texto: v, marcada: false });
+  saveContenido("lista", data);
+  renderApp();
+}
+
+/* ---------- guardado de campos editables (contenteditable) ---------- */
+appEl.addEventListener("focusout", e=>{
+  const el = e.target.closest("[data-field]");
+  if(el){
+    const collection = el.dataset.collection, id = el.dataset.id, field = el.dataset.field, sub = el.dataset.sub;
+    const value = el.innerText.replace(/\n+$/,"");
+    if(sub){
+      const d = getStoreFor(collection)[id];
+      const subObj = { ...((d && d[sub]) || {}), [field]: value };
+      saveDoc(collection, id, { [sub]: subObj });
+    } else {
+      saveDoc(collection, id, { [field]: value });
+    }
+    if(sub === "producto" && (field === "cantidad" || field === "precioEnvase")){
+      renderApp();
+    }
+    return;
+  }
+  const blurEl = e.target.closest("[data-action-blur]");
+  if(blurEl){
+    const kind = blurEl.dataset.actionBlur;
+    const value = blurEl.innerText;
+    if(kind === "cal-titulo"){
+      const si = parseInt(blurEl.dataset.si,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones[si].titulo = value;
+      saveContenido("calendario", data);
+    } else if(kind === "cal-tarea"){
+      const si = parseInt(blurEl.dataset.si,10), ti = parseInt(blurEl.dataset.ti,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones[si].tareas[ti] = value;
+      saveContenido("calendario", data);
+    } else if(kind === "shop-texto"){
+      const i = parseInt(blurEl.dataset.i,10);
+      const data = JSON.parse(JSON.stringify(listaCompraData));
+      data.items[i].texto = value;
+      saveContenido("lista", data);
+    }
+  }
+});
+
+initFirebase();
+</script>
+</body>
+</html>
