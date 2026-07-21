@@ -169,6 +169,12 @@ select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid
 
 /* ---------- calendario / lista compra ---------- */
 .cal-section{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin-bottom:16px; }
+.cal-section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.cal-section-head h3{ font-size:1.05rem; }
+.cal-task{ display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
+.cal-task:last-child{ border-bottom:none; }
+.cal-task .dot{ width:6px; height:6px; border-radius:50%; background: var(--sage); margin-top:9px; flex-shrink:0; }
+.cal-task .txt{ flex:1; outline:none; line-height:1.5; }
 .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:10px; flex-wrap:wrap; }
 .cal-nav h2{ font-size:1.2rem; margin:0; }
 .cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
@@ -278,7 +284,7 @@ let ingredientesData = {};
 let formulasData = {};
 let etiquetasInciData = {};
 let categoriasGuiaData = {};
-let calendarioData = { tareasPorDia: {} };
+let calendarioData = { tareasPorDia: {}, secciones: [] };
 let listaCompraData = { items: [] };
 
 function getStoreFor(collection){
@@ -321,7 +327,7 @@ function loadLocal(){
   try{ formulasData = JSON.parse(localStorage.getItem(LS_KEYS.formulas)) || {}; }catch(e){ formulasData = {}; }
   try{ etiquetasInciData = JSON.parse(localStorage.getItem(LS_KEYS.etiquetasInci)) || {}; }catch(e){ etiquetasInciData = {}; }
   try{ categoriasGuiaData = JSON.parse(localStorage.getItem(LS_KEYS.categoriasGuia)) || {}; }catch(e){ categoriasGuiaData = {}; }
-  try{ calendarioData = JSON.parse(localStorage.getItem(LS_KEYS.calendario)) || { tareasPorDia: {} }; }catch(e){ calendarioData = { tareasPorDia: {} }; }
+  try{ calendarioData = JSON.parse(localStorage.getItem(LS_KEYS.calendario)) || { tareasPorDia: {}, secciones: [] }; }catch(e){ calendarioData = { tareasPorDia: {}, secciones: [] }; }
   try{ listaCompraData = JSON.parse(localStorage.getItem(LS_KEYS.lista)) || { items: [] }; }catch(e){ listaCompraData = { items: [] }; }
   try{ devAdminMode = localStorage.getItem(LS_KEYS.devAdmin) === "1"; }catch(e){ devAdminMode = false; }
 }
@@ -360,7 +366,7 @@ function startFirestoreListeners(){
     const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); categoriasGuiaData = next; renderApp();
   }, ()=>{});
   db.collection("contenido").doc("calendario").onSnapshot(doc=>{
-    calendarioData = doc.exists ? doc.data() : { tareasPorDia: {} }; renderApp();
+    calendarioData = doc.exists ? doc.data() : { tareasPorDia: {}, secciones: [] }; renderApp();
   }, ()=>{});
   db.collection("contenido").doc("listaCompra").onSnapshot(doc=>{
     listaCompraData = doc.exists ? doc.data() : { items: [] }; renderApp();
@@ -980,6 +986,34 @@ function renderCalendario(){
     ${DIAS_ES.map(d=>`<div class="cal-day-label">${d}</div>`).join("")}
     ${cells}
   </div>
+  <h2 style="margin-top:30px;">Listas de tareas</h2>
+  ${renderCalSecciones(adminOn)}
+  `;
+}
+function renderCalSecciones(adminOn){
+  const secciones = calendarioData.secciones || [];
+  let body;
+  if(secciones.length === 0){
+    body = adminOn ? "" : `<div class="empty-state">${icon("calendar")}<p>Todavía no hay nada planificado.</p></div>`;
+  } else {
+    body = secciones.map((sec, si)=> `
+      <div class="cal-section">
+        <div class="cal-section-head">
+          <h3 ${adminOn?'contenteditable="true"':''} class="${adminOn?'editable':''}" data-action-blur="cal-titulo" data-si="${si}">${escapeHtml(sec.titulo||"")}</h3>
+          ${adminOn ? `<button class="text-btn no-print" data-action="cal-del-seccion" data-si="${si}">${icon("trash")}</button>` : ""}
+        </div>
+        ${(sec.tareas||[]).map((t,ti)=> `
+          <div class="cal-task">
+            <div class="dot"></div>
+            <div class="txt" ${adminOn?'contenteditable="true"':''} data-action-blur="cal-tarea" data-si="${si}" data-ti="${ti}">${escapeHtml(t)}</div>
+            ${adminOn ? `<button class="text-btn no-print" data-action="cal-del-tarea" data-si="${si}" data-ti="${ti}">${icon("trash")}</button>` : ""}
+          </div>`).join("")}
+        ${adminOn ? `<div class="small-add-row no-print"><input type="text" placeholder="Añadir tarea..." data-action-enter="cal-add-tarea" data-si="${si}"><button class="text-btn" data-action="cal-add-tarea-btn" data-si="${si}">${icon("plus")}</button></div>` : ""}
+      </div>`).join("");
+  }
+  return `
+  ${body}
+  ${adminOn ? `<div class="small-add-row no-print"><input type="text" placeholder="Nueva sección (ej. Semanal)..." data-action-enter="cal-add-seccion"><button class="pill-btn" data-action="cal-add-seccion-btn">${icon("plus")}Sección</button></div>` : ""}
   `;
 }
 
@@ -1226,6 +1260,26 @@ appEl.addEventListener("click", e=>{
       saveContenido("calendario", data); renderApp();
       break;
     }
+    case "cal-del-seccion": {
+      const si = parseInt(btn.dataset.si,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones.splice(si,1);
+      saveContenido("calendario", data); renderApp();
+      break;
+    }
+    case "cal-del-tarea": {
+      const si = parseInt(btn.dataset.si,10), ti = parseInt(btn.dataset.ti,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones[si].tareas.splice(ti,1);
+      saveContenido("calendario", data); renderApp();
+      break;
+    }
+    case "cal-add-seccion-btn": addCalSeccion(btn.parentElement.querySelector("input")); break;
+    case "cal-add-tarea-btn": {
+      const si = parseInt(btn.dataset.si,10);
+      addCalTarea(si, btn.parentElement.querySelector("input"));
+      break;
+    }
     case "shop-toggle": {
       const i = parseInt(btn.dataset.i,10);
       const data = JSON.parse(JSON.stringify(listaCompraData));
@@ -1277,10 +1331,29 @@ appEl.addEventListener("keydown", e=>{
   if(e.key === "Enter" && e.target.matches("input[data-action-enter]")){
     e.preventDefault();
     const action = e.target.dataset.actionEnter;
+    if(action === "cal-add-seccion") addCalSeccion(e.target);
+    if(action === "cal-add-tarea") addCalTarea(parseInt(e.target.dataset.si,10), e.target);
     if(action === "shop-add") addShopItem(e.target);
   }
 });
 
+function addCalSeccion(input){
+  const v = input.value.trim();
+  if(!v) return;
+  const data = JSON.parse(JSON.stringify(calendarioData));
+  if(!data.secciones) data.secciones = [];
+  data.secciones.push({ titulo: v, tareas: [] });
+  saveContenido("calendario", data);
+  renderApp();
+}
+function addCalTarea(si, input){
+  const v = input.value.trim();
+  if(!v) return;
+  const data = JSON.parse(JSON.stringify(calendarioData));
+  data.secciones[si].tareas.push(v);
+  saveContenido("calendario", data);
+  renderApp();
+}
 function addShopItem(input){
   const v = input.value.trim();
   if(!v) return;
@@ -1312,7 +1385,17 @@ appEl.addEventListener("focusout", e=>{
   if(blurEl){
     const kind = blurEl.dataset.actionBlur;
     const value = blurEl.innerText;
-    if(kind === "shop-texto"){
+    if(kind === "cal-titulo"){
+      const si = parseInt(blurEl.dataset.si,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones[si].titulo = value;
+      saveContenido("calendario", data);
+    } else if(kind === "cal-tarea"){
+      const si = parseInt(blurEl.dataset.si,10), ti = parseInt(blurEl.dataset.ti,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.secciones[si].tareas[ti] = value;
+      saveContenido("calendario", data);
+    } else if(kind === "shop-texto"){
       const i = parseInt(blurEl.dataset.i,10);
       const data = JSON.parse(JSON.stringify(listaCompraData));
       data.items[i].texto = value;
