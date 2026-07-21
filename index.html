@@ -482,6 +482,7 @@ function showToast(message){
   toastTimeout = setTimeout(()=>{ toast.classList.remove("show"); }, 3800);
 }
 function escapeHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function toNumber(v){ return parseFloat(String(v||"").trim().replace(",", ".")); }
 function isSafariBrowser(){
   const ua = navigator.userAgent;
   return /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(ua);
@@ -865,8 +866,8 @@ function renderFichaFormula(id){
   const editAttr = adminOn ? "true" : "false";
   const receta = d.receta || {};
   const producto = d.producto || {};
-  const cantidad = parseFloat(producto.cantidad);
-  let precio = parseFloat(producto.precioEnvase);
+  const cantidad = toNumber(producto.cantidad);
+  let precio = toNumber(producto.precioEnvase);
   if(producto.monedaUnidad === "cent" && !isNaN(precio)) precio = precio / 100;
   let priceLine = "";
   if(cantidad > 0 && precio > 0){
