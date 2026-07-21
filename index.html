@@ -328,11 +328,11 @@ const LS_KEYS = { ingredientes:"ln_ingredientes", formulas:"ln_formulas", etique
 const DEFAULT_INGREDIENTES = {
   agua: { nombre: "Agua" },
   alcohol70: { nombre: "Alcohol de 70º" },
+  aguaOxigenada: { nombre: "Agua oxigenada" },
   vinagreLimpieza: { nombre: "Vinagre de limpieza" },
   carbonatoSodico: { nombre: "Carbonato sódico" },
   bicarbonatoSodico: { nombre: "Bicarbonato sódico" },
   percarbonatoSodico: { nombre: "Percarbonato sódico" },
-  aguaOxigenada: { nombre: "Agua oxigenada" },
   acidoCitrico: { nombre: "Ácido cítrico" },
   jabonPotasico: { nombre: "Jabón potásico" },
   jabonSodico: { nombre: "Jabón sódico" },
@@ -703,7 +703,7 @@ const LIST_META = {
   ingredientes: { title: "Ingredientes esenciales", singular: "ingrediente", back: "home", collection: "ingredientes", openScreen: "ingrediente", emptyIcon: "flask" },
   etiquetasInci: { title: "Etiquetas INCI", singular: "etiqueta INCI", back: "home", collection: "etiquetasInci", openScreen: "etiquetaInci", emptyIcon: "tag" }
 };
-const INGREDIENTES_ORDER = ["agua","alcohol70","vinagreLimpieza","carbonatoSodico","bicarbonatoSodico","percarbonatoSodico","aguaOxigenada","acidoCitrico","jabonPotasico","jabonSodico","trapos","estropajos","recipientes"];
+const INGREDIENTES_ORDER = ["agua","alcohol70","aguaOxigenada","vinagreLimpieza","carbonatoSodico","bicarbonatoSodico","percarbonatoSodico","acidoCitrico","jabonPotasico","jabonSodico","trapos","estropajos","recipientes"];
 function renderListScreen(kind){
   const meta = LIST_META[kind];
   const data = getStoreFor(meta.collection);
