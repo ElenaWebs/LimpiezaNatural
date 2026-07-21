@@ -169,12 +169,30 @@ select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid
 
 /* ---------- calendario / lista compra ---------- */
 .cal-section{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin-bottom:16px; }
-.cal-section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
-.cal-section-head h3{ font-size:1.05rem; }
-.cal-task{ display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
-.cal-task:last-child{ border-bottom:none; }
-.cal-task .dot{ width:6px; height:6px; border-radius:50%; background: var(--sage); margin-top:9px; flex-shrink:0; }
-.cal-task .txt{ flex:1; outline:none; line-height:1.5; }
+.cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:10px; flex-wrap:wrap; }
+.cal-nav h2{ font-size:1.2rem; margin:0; }
+.cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
+.cal-day-label{ text-align:center; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color: var(--ink-faint); padding-bottom:4px; }
+.cal-day{ background: var(--card); border:1px solid var(--line); border-radius:10px; padding:6px; min-height:88px; display:flex; flex-direction:column; gap:4px; position:relative; }
+.cal-day-empty{ background:transparent; border-color:transparent; }
+.cal-day-today{ border-color: var(--sage); box-shadow: inset 0 0 0 1px var(--sage); }
+.cal-day-num{ font-size:.78rem; color: var(--ink-soft); font-weight:600; }
+.cal-day-today .cal-day-num{ color: var(--sage-deep); }
+.cal-day-tasks{ display:flex; flex-direction:column; gap:3px; flex:1; }
+.cal-day-task{ display:flex; align-items:flex-start; gap:3px; background: var(--sage-soft); color: var(--sage-deep); border-radius:5px; padding:2px 5px; font-size:.68rem; line-height:1.25; }
+.cal-day-task span{ flex:1; word-break:break-word; }
+.cal-day-task-del{ background:none; border:none; color: var(--sage-deep); font-size:.85rem; line-height:1; opacity:.6; flex-shrink:0; }
+.cal-day-task-del:hover{ opacity:1; }
+.cal-day-add{ align-self:flex-start; width:18px; height:18px; border-radius:50%; background: var(--bg-alt); color: var(--ink-soft); display:flex; align-items:center; justify-content:center; }
+.cal-day-add svg{ width:10px; height:10px; }
+.cal-day-add:hover{ background: var(--sage-soft); color: var(--sage-deep); }
+@media print{
+  .no-print{ display:none !important; }
+  body{ background:#fff; }
+  .app{ max-width:none; padding:0; }
+  .cal-day{ break-inside: avoid; border-color:#ccc; }
+  .cal-day-task{ background:#f0f0f0; color:#222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 .shop-item{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
 .shop-item:last-child{ border-bottom:none; }
 .shop-check{ width:20px; height:20px; border-radius:6px; border:1.5px solid var(--line-strong); flex-shrink:0; display:flex; align-items:center; justify-content:center; background: var(--card); }
@@ -260,7 +278,7 @@ let ingredientesData = {};
 let formulasData = {};
 let etiquetasInciData = {};
 let categoriasGuiaData = {};
-let calendarioData = { secciones: [] };
+let calendarioData = { tareasPorDia: {} };
 let listaCompraData = { items: [] };
 
 function getStoreFor(collection){
@@ -303,7 +321,7 @@ function loadLocal(){
   try{ formulasData = JSON.parse(localStorage.getItem(LS_KEYS.formulas)) || {}; }catch(e){ formulasData = {}; }
   try{ etiquetasInciData = JSON.parse(localStorage.getItem(LS_KEYS.etiquetasInci)) || {}; }catch(e){ etiquetasInciData = {}; }
   try{ categoriasGuiaData = JSON.parse(localStorage.getItem(LS_KEYS.categoriasGuia)) || {}; }catch(e){ categoriasGuiaData = {}; }
-  try{ calendarioData = JSON.parse(localStorage.getItem(LS_KEYS.calendario)) || { secciones: [] }; }catch(e){ calendarioData = { secciones: [] }; }
+  try{ calendarioData = JSON.parse(localStorage.getItem(LS_KEYS.calendario)) || { tareasPorDia: {} }; }catch(e){ calendarioData = { tareasPorDia: {} }; }
   try{ listaCompraData = JSON.parse(localStorage.getItem(LS_KEYS.lista)) || { items: [] }; }catch(e){ listaCompraData = { items: [] }; }
   try{ devAdminMode = localStorage.getItem(LS_KEYS.devAdmin) === "1"; }catch(e){ devAdminMode = false; }
 }
@@ -342,7 +360,7 @@ function startFirestoreListeners(){
     const next = {}; snap.forEach(doc=> next[doc.id] = doc.data()); categoriasGuiaData = next; renderApp();
   }, ()=>{});
   db.collection("contenido").doc("calendario").onSnapshot(doc=>{
-    calendarioData = doc.exists ? doc.data() : { secciones: [] }; renderApp();
+    calendarioData = doc.exists ? doc.data() : { tareasPorDia: {} }; renderApp();
   }, ()=>{});
   db.collection("contenido").doc("listaCompra").onSnapshot(doc=>{
     listaCompraData = doc.exists ? doc.data() : { items: [] }; renderApp();
@@ -507,6 +525,7 @@ function icon(name){
     externalLink: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3M14 4h6v6M20 4l-9 9"/></svg>',
     photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10.5" r="1.6"/><path d="M4 16.5l4.5-4 3.5 3 3-2.5 4.5 3.5"/></svg>',
     logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M15 16l4.5-4-4.5-4"/><line x1="19.2" y1="12" x2="9" y2="12"/></svg>',
+    printer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8.5V4h10v4.5"/><rect x="4.5" y="8.5" width="15" height="8" rx="1.5"/><path d="M7 15.5h10V20H7z"/><circle cx="16.3" cy="11.3" r="0.6" fill="currentColor" stroke="none"/></svg>',
     tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.6V6.5A2.5 2.5 0 0 0 17.5 4h-6.1a2 2 0 0 0-1.4.6L3.6 11a2 2 0 0 0 0 2.8l6.6 6.6a2 2 0 0 0 2.8 0l6.4-6.4a2 2 0 0 0 .6-1.4Z"/><circle cx="14.2" cy="8.8" r="1.1"/></svg>',
     shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.3l7 2.7v5.4c0 5-3 8.4-7 9.5-4-1.1-7-4.5-7-9.5V6l7-2.7z"/><path d="M9 12l2.2 2.2L15.5 9.5"/></svg>'
   };
@@ -545,13 +564,13 @@ function renderLoginGate(){
 
 function renderDevBanner(){
   if(USE_FIREBASE) return "";
-  return `<div class="dev-banner"><strong>Modo local de pruebas</strong>Aún no está conectado Firebase, así que los datos se guardan solo en este navegador. Usa el candado para activar el modo edición de prueba.</div>`;
+  return `<div class="dev-banner no-print"><strong>Modo local de pruebas</strong>Aún no está conectado Firebase, así que los datos se guardan solo en este navegador. Usa el candado para activar el modo edición de prueba.</div>`;
 }
 
 function renderTopbar(){
   const adminOn = isAdmin();
   return `
-  <div class="topbar">
+  <div class="topbar no-print">
     <div class="brand" data-action="go-home">
       <h1>LimpiezaNatural</h1>
     </div>
@@ -912,33 +931,55 @@ function renderUnidadField(unidad, id, adminOn){
 }
 
 /* ---------- calendario ---------- */
+const MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DIAS_ES = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+function pad2(n){ return String(n).padStart(2,"0"); }
+function dateKey(y,m,d){ return `${y}-${pad2(m+1)}-${pad2(d)}`; }
 function renderCalendario(){
   const adminOn = isAdmin();
-  const secciones = calendarioData.secciones || [];
-  let body;
-  if(secciones.length === 0){
-    body = adminOn ? "" : `<div class="empty-state">${icon("calendar")}<p>Todavía no hay nada planificado.</p></div>`;
-  } else {
-    body = secciones.map((sec, si)=> `
-      <div class="cal-section">
-        <div class="cal-section-head">
-          <h3 ${adminOn?'contenteditable="true"':''} class="${adminOn?'editable':''}" data-action-blur="cal-titulo" data-si="${si}">${escapeHtml(sec.titulo||"")}</h3>
-          ${adminOn ? `<button class="text-btn" data-action="cal-del-seccion" data-si="${si}">${icon("trash")}</button>` : ""}
-        </div>
-        ${(sec.tareas||[]).map((t,ti)=> `
-          <div class="cal-task">
-            <div class="dot"></div>
-            <div class="txt" ${adminOn?'contenteditable="true"':''} data-action-blur="cal-tarea" data-si="${si}" data-ti="${ti}">${escapeHtml(t)}</div>
-            ${adminOn ? `<button class="text-btn" data-action="cal-del-tarea" data-si="${si}" data-ti="${ti}">${icon("trash")}</button>` : ""}
+  const today = new Date();
+  if(V.calYear == null){ V.calYear = today.getFullYear(); V.calMonth = today.getMonth(); }
+  const y = V.calYear, m = V.calMonth;
+  const tareas = calendarioData.tareasPorDia || {};
+  const firstWeekday = (new Date(y,m,1).getDay()+6)%7;
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  let cells = "";
+  for(let i=0;i<firstWeekday;i++) cells += `<div class="cal-day cal-day-empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const key = dateKey(y,m,d);
+    const dayTareas = tareas[key] || [];
+    const isToday = key === todayKey;
+    cells += `
+    <div class="cal-day ${isToday?"cal-day-today":""}">
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-day-tasks">
+        ${dayTareas.map((t,ti)=> `
+          <div class="cal-day-task">
+            <span>${escapeHtml(t)}</span>
+            ${adminOn ? `<button class="cal-day-task-del no-print" data-action="cal-del-tarea-dia" data-date="${key}" data-idx="${ti}" aria-label="Eliminar tarea">×</button>` : ""}
           </div>`).join("")}
-        ${adminOn ? `<div class="small-add-row"><input type="text" placeholder="Añadir tarea..." data-action-enter="cal-add-tarea" data-si="${si}"><button class="text-btn" data-action="cal-add-tarea-btn" data-si="${si}">${icon("plus")}</button></div>` : ""}
-      </div>`).join("");
+      </div>
+      ${adminOn ? `<button class="cal-day-add no-print" data-action="cal-add-tarea-dia" data-date="${key}" aria-label="Añadir tarea">${icon("plus")}</button>` : ""}
+    </div>`;
   }
+
   return `
-  <button class="back-btn" data-action="go-home">${icon("arrowLeft")}Volver</button>
+  <button class="back-btn no-print" data-action="go-home">${icon("arrowLeft")}Volver</button>
   <div class="section-head"><h1>Calendario</h1></div>
-  ${body}
-  ${adminOn ? `<div class="small-add-row"><input type="text" placeholder="Nueva sección (ej. Semanal)..." data-action-enter="cal-add-seccion"><button class="pill-btn" data-action="cal-add-seccion-btn">${icon("plus")}Sección</button></div>` : ""}
+  <div class="cal-nav">
+    <button class="icon-btn no-print" data-action="cal-prev-month" aria-label="Mes anterior">${icon("arrowLeft")}</button>
+    <h2>${MESES_ES[m]} ${y}</h2>
+    <div style="display:flex; gap:8px;">
+      <button class="icon-btn no-print" data-action="cal-next-month" aria-label="Mes siguiente" style="transform:scaleX(-1);">${icon("arrowLeft")}</button>
+      <button class="pill-btn ghost no-print" data-action="cal-print">${icon("printer")}Imprimir</button>
+    </div>
+  </div>
+  <div class="cal-grid">
+    ${DIAS_ES.map(d=>`<div class="cal-day-label">${d}</div>`).join("")}
+    ${cells}
+  </div>
   `;
 }
 
@@ -987,6 +1028,14 @@ function submitPromptModal(){
   }
   if(pm.submitAction === "create-etiquetaInci"){ const nid = newId(); saveDoc("etiquetasInci", nid, {nombre:v}); closeAllModals(); go("etiquetaInci", {id:nid}); }
   if(pm.submitAction === "create-categoria"){ const nid = newId(); saveDoc("categoriasGuia", nid, {nombre:v}); closeAllModals(); renderApp(); }
+  if(pm.submitAction === "create-tarea-dia"){
+    const data = JSON.parse(JSON.stringify(calendarioData));
+    if(!data.tareasPorDia) data.tareasPorDia = {};
+    if(!data.tareasPorDia[pm.fecha]) data.tareasPorDia[pm.fecha] = [];
+    data.tareasPorDia[pm.fecha].push(v);
+    saveContenido("calendario", data);
+    closeAllModals(); renderApp();
+  }
 }
 
 function renderModals(){
@@ -1153,24 +1202,28 @@ appEl.addEventListener("click", e=>{
       break;
     case "set-unidad": break; // handled on change event
     case "set-categoria-formula": break; // handled on change event
-    case "cal-del-seccion": {
-      const si = parseInt(btn.dataset.si,10);
-      const data = JSON.parse(JSON.stringify(calendarioData));
-      data.secciones.splice(si,1);
-      saveContenido("calendario", data); renderApp();
+    case "cal-prev-month": {
+      V.calMonth--;
+      if(V.calMonth < 0){ V.calMonth = 11; V.calYear--; }
+      renderApp();
       break;
     }
-    case "cal-del-tarea": {
-      const si = parseInt(btn.dataset.si,10), ti = parseInt(btn.dataset.ti,10);
-      const data = JSON.parse(JSON.stringify(calendarioData));
-      data.secciones[si].tareas.splice(ti,1);
-      saveContenido("calendario", data); renderApp();
+    case "cal-next-month": {
+      V.calMonth++;
+      if(V.calMonth > 11){ V.calMonth = 0; V.calYear++; }
+      renderApp();
       break;
     }
-    case "cal-add-seccion-btn": addCalSeccion(btn.parentElement.querySelector("input")); break;
-    case "cal-add-tarea-btn": {
-      const si = parseInt(btn.dataset.si,10);
-      addCalTarea(si, btn.parentElement.querySelector("input"));
+    case "cal-print": window.print(); break;
+    case "cal-add-tarea-dia":
+      openPrompt({ title:"Nueva tarea", placeholder:"Ej. Regar las plantas", submitAction:"create-tarea-dia", fecha: btn.dataset.date });
+      break;
+    case "cal-del-tarea-dia": {
+      const fecha = btn.dataset.date, idx = parseInt(btn.dataset.idx,10);
+      const data = JSON.parse(JSON.stringify(calendarioData));
+      data.tareasPorDia[fecha].splice(idx,1);
+      if(data.tareasPorDia[fecha].length === 0) delete data.tareasPorDia[fecha];
+      saveContenido("calendario", data); renderApp();
       break;
     }
     case "shop-toggle": {
@@ -1224,28 +1277,10 @@ appEl.addEventListener("keydown", e=>{
   if(e.key === "Enter" && e.target.matches("input[data-action-enter]")){
     e.preventDefault();
     const action = e.target.dataset.actionEnter;
-    if(action === "cal-add-seccion") addCalSeccion(e.target);
-    if(action === "cal-add-tarea") addCalTarea(parseInt(e.target.dataset.si,10), e.target);
     if(action === "shop-add") addShopItem(e.target);
   }
 });
 
-function addCalSeccion(input){
-  const v = input.value.trim();
-  if(!v) return;
-  const data = JSON.parse(JSON.stringify(calendarioData));
-  data.secciones.push({ titulo: v, tareas: [] });
-  saveContenido("calendario", data);
-  renderApp();
-}
-function addCalTarea(si, input){
-  const v = input.value.trim();
-  if(!v) return;
-  const data = JSON.parse(JSON.stringify(calendarioData));
-  data.secciones[si].tareas.push(v);
-  saveContenido("calendario", data);
-  renderApp();
-}
 function addShopItem(input){
   const v = input.value.trim();
   if(!v) return;
@@ -1277,17 +1312,7 @@ appEl.addEventListener("focusout", e=>{
   if(blurEl){
     const kind = blurEl.dataset.actionBlur;
     const value = blurEl.innerText;
-    if(kind === "cal-titulo"){
-      const si = parseInt(blurEl.dataset.si,10);
-      const data = JSON.parse(JSON.stringify(calendarioData));
-      data.secciones[si].titulo = value;
-      saveContenido("calendario", data);
-    } else if(kind === "cal-tarea"){
-      const si = parseInt(blurEl.dataset.si,10), ti = parseInt(blurEl.dataset.ti,10);
-      const data = JSON.parse(JSON.stringify(calendarioData));
-      data.secciones[si].tareas[ti] = value;
-      saveContenido("calendario", data);
-    } else if(kind === "shop-texto"){
+    if(kind === "shop-texto"){
       const i = parseInt(blurEl.dataset.i,10);
       const data = JSON.parse(JSON.stringify(listaCompraData));
       data.items[i].texto = value;
