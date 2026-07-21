@@ -166,6 +166,13 @@ a{ color: var(--sage-deep); }
 .price-highlight .num{ font-family: var(--font-display); font-size:1.4rem; color: var(--sage-deep); }
 .price-highlight .lbl{ font-size:.78rem; color: var(--ink-soft); }
 select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-family: var(--font-body); font-size:.9rem; }
+.ingr-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.ingr-line{ display:flex; gap:8px; align-items:center; }
+.ingr-cant{ width:52px; flex-shrink:0; border-bottom:1px dashed var(--line-strong); padding-bottom:5px; }
+.ingr-unidad{ flex-shrink:0; appearance:none; background: var(--bg-alt); border:1px solid var(--line); border-radius:8px; padding:6px 8px; font-family: var(--font-body); font-size:.82rem; }
+.ingr-nombre{ flex:1; border-bottom:1px dashed var(--line-strong); padding-bottom:5px; }
+.ingr-line-view{ padding:7px 0; border-bottom:1px solid var(--line); line-height:1.5; }
+.ingr-line-view:last-child{ border-bottom:none; }
 
 /* ---------- calendario / lista compra ---------- */
 .cal-section{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin-bottom:16px; }
@@ -859,7 +866,8 @@ function renderFichaFormula(id){
   const receta = d.receta || {};
   const producto = d.producto || {};
   const cantidad = parseFloat(producto.cantidad);
-  const precio = parseFloat(producto.precioEnvase);
+  let precio = parseFloat(producto.precioEnvase);
+  if(producto.monedaUnidad === "cent" && !isNaN(precio)) precio = precio / 100;
   let priceLine = "";
   if(cantidad > 0 && precio > 0){
     const unidad = producto.unidad || "ml";
@@ -870,7 +878,8 @@ function renderFichaFormula(id){
     else { perBase = precio / cantidad; baseLabel = "kg"; }
     priceLine = `<div class="price-highlight"><span class="num">${perBase.toFixed(2)} €</span><span class="lbl">por ${baseLabel}</span></div>`;
   }
-  const hasReceta = adminOn || receta.pasos || receta.ingredientes || receta.notas;
+  const ingredientesList = receta.ingredientesList || [];
+  const hasReceta = adminOn || receta.pasos || receta.notas || receta.rendimientoCantidad || ingredientesList.length > 0;
   const hasProducto = adminOn || producto.marca || producto.tienda || producto.link;
   return `
   <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
@@ -883,7 +892,14 @@ function renderFichaFormula(id){
   ${hasReceta ? `
   <div class="subsection">
     <h4>Receta casera</h4>
-    ${renderSubField("Ingredientes", "ingredientes", receta.ingredientes, "formulas", id, "receta", adminOn, "Qué lleva y en qué cantidades")}
+    ${(adminOn || receta.rendimientoCantidad) ? `
+    <div class="mini-grid">
+      ${renderSubField("Cantidad de producto final", "rendimientoCantidad", receta.rendimientoCantidad, "formulas", id, "receta", adminOn, "Ej. 500", "number")}
+      ${renderRendimientoUnidadField(receta.rendimientoUnidad, id, adminOn)}
+    </div>
+    ${receta.rendimientoCantidad ? `<p style="color:var(--ink-soft); font-size:.9rem; margin-top:-8px;">Para un envase de ${escapeHtml(receta.rendimientoCantidad)} ${escapeHtml(receta.rendimientoUnidad||"ml")}</p>` : ""}
+    ` : ""}
+    ${renderRecetaIngredientesList(ingredientesList, id, adminOn)}
     ${renderSubField("Preparación", "pasos", receta.pasos, "formulas", id, "receta", adminOn, "Pasos para hacerla")}
     ${renderSubField("Notas", "notas", receta.notas, "formulas", id, "receta", adminOn, "Conservación, variantes...")}
   </div>` : ""}
@@ -896,7 +912,8 @@ function renderFichaFormula(id){
       ${renderSubField("Tienda", "tienda", producto.tienda, "formulas", id, "producto", adminOn, "Dónde lo compro")}
       ${renderSubField("Cantidad del envase", "cantidad", producto.cantidad, "formulas", id, "producto", adminOn, "Ej. 750", "number")}
       ${renderUnidadField(producto.unidad, id, adminOn)}
-      ${renderSubField("Precio del envase (€)", "precioEnvase", producto.precioEnvase, "formulas", id, "producto", adminOn, "Ej. 3.20", "number")}
+      ${renderSubField(`Precio del envase`, "precioEnvase", producto.precioEnvase, "formulas", id, "producto", adminOn, "Ej. 3.20", "number")}
+      ${renderMonedaUnidadField(producto.monedaUnidad, id, adminOn)}
     </div>
     ${priceLine}
     ${producto.link || adminOn ? `<div class="field-block"><span class="field-label">Enlace</span><div class="field-value ${ed}" contenteditable="${editAttr}" data-field="link" data-collection="formulas" data-id="${id}" data-sub="producto" data-placeholder="https://...">${escapeHtml(producto.link||"")}</div>${producto.link ? `<a href="${escapeHtml(producto.link)}" target="_blank" rel="noopener" class="text-btn" style="margin-top:6px;">${icon("externalLink")}Abrir enlace</a>` : ""}</div>` : ""}
@@ -904,6 +921,47 @@ function renderFichaFormula(id){
 
   ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="delete-formula" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
   `;
+}
+function renderRendimientoUnidadField(unidad, id, adminOn){
+  if(!adminOn) return "";
+  unidad = unidad || "ml";
+  const opts = ["ml","L","g","kg"].map(u=> `<option value="${u}" ${u===unidad?"selected":""}>${u}</option>`).join("");
+  return `
+  <div class="field-block">
+    <span class="field-label">Unidad</span>
+    <select class="field-value" data-action="set-rendimiento-unidad" data-id="${id}">${opts}</select>
+  </div>`;
+}
+function renderMonedaUnidadField(moneda, id, adminOn){
+  if(!adminOn) return "";
+  moneda = moneda || "euro";
+  const opts = [["euro","€"],["cent","cents"]].map(([v,l])=> `<option value="${v}" ${v===moneda?"selected":""}>${l}</option>`).join("");
+  return `
+  <div class="field-block">
+    <span class="field-label">Moneda</span>
+    <select class="field-value" data-action="set-moneda-unidad" data-id="${id}">${opts}</select>
+  </div>`;
+}
+function renderRecetaIngredientesList(lista, id, adminOn){
+  if(!adminOn && lista.length === 0) return "";
+  const editAttr = adminOn ? "true" : "false";
+  const rows = lista.map((line, idx)=> adminOn ? `
+    <div class="ingr-line">
+      <div class="ingr-cant field-value" contenteditable="${editAttr}" data-action-blur="receta-ingr-cantidad" data-id="${id}" data-idx="${idx}" data-placeholder="Cant.">${escapeHtml(line.cantidad||"")}</div>
+      <select class="ingr-unidad" data-action="set-receta-ingr-unidad" data-id="${id}" data-idx="${idx}">
+        ${["ml","L","g","kg","cucharadas","cucharaditas","gotas","ud"].map(u=> `<option value="${u}" ${u===(line.unidad||"ml")?"selected":""}>${u}</option>`).join("")}
+      </select>
+      <div class="ingr-nombre field-value" contenteditable="${editAttr}" data-action-blur="receta-ingr-nombre" data-id="${id}" data-idx="${idx}" data-placeholder="Ingrediente">${escapeHtml(line.ingrediente||"")}</div>
+      <button class="text-btn" data-action="del-receta-ingr" data-id="${id}" data-idx="${idx}">${icon("trash")}</button>
+    </div>` : `
+    <div class="ingr-line-view">${escapeHtml(line.cantidad||"")} ${escapeHtml(line.unidad||"")} ${escapeHtml(line.ingrediente||"")}</div>`
+  ).join("");
+  return `
+  <div class="field-block">
+    <span class="field-label">Ingredientes</span>
+    <div class="ingr-list">${rows}</div>
+    ${adminOn ? `<button class="text-btn" data-action="add-receta-ingr" data-id="${id}">${icon("plus")}Añadir ingrediente</button>` : ""}
+  </div>`;
 }
 
 function renderSubField(label, field, value, collection, id, sub, adminOn, placeholder, type){
@@ -1243,6 +1301,30 @@ appEl.addEventListener("click", e=>{
       break;
     case "set-unidad": break; // handled on change event
     case "set-categoria-formula": break; // handled on change event
+    case "set-rendimiento-unidad": break; // handled on change event
+    case "set-moneda-unidad": break; // handled on change event
+    case "set-receta-ingr-unidad": break; // handled on change event
+    case "add-receta-ingr": {
+      const fid = btn.dataset.id;
+      const fd = formulasData[fid];
+      const receta = { ...(fd.receta||{}) };
+      const lista = [...(receta.ingredientesList||[]), { cantidad:"", unidad:"ml", ingrediente:"" }];
+      receta.ingredientesList = lista;
+      saveDoc("formulas", fid, { receta });
+      renderApp();
+      break;
+    }
+    case "del-receta-ingr": {
+      const fid = btn.dataset.id, idx = parseInt(btn.dataset.idx,10);
+      const fd = formulasData[fid];
+      const receta = { ...(fd.receta||{}) };
+      const lista = [...(receta.ingredientesList||[])];
+      lista.splice(idx,1);
+      receta.ingredientesList = lista;
+      saveDoc("formulas", fid, { receta });
+      renderApp();
+      break;
+    }
     case "cal-prev-month": {
       V.calMonth--;
       if(V.calMonth < 0){ V.calMonth = 11; V.calYear--; }
@@ -1337,6 +1419,29 @@ appEl.addEventListener("change", e=>{
     saveDoc("formulas", id, { categoriaId: e.target.value || null });
     renderApp();
   }
+  if(e.target.matches('select[data-action="set-rendimiento-unidad"]')){
+    const id = e.target.dataset.id;
+    const d = formulasData[id];
+    const receta = { ...(d.receta||{}), rendimientoUnidad: e.target.value };
+    saveDoc("formulas", id, { receta });
+    renderApp();
+  }
+  if(e.target.matches('select[data-action="set-moneda-unidad"]')){
+    const id = e.target.dataset.id;
+    const d = formulasData[id];
+    const producto = { ...(d.producto||{}), monedaUnidad: e.target.value };
+    saveDoc("formulas", id, { producto });
+    renderApp();
+  }
+  if(e.target.matches('select[data-action="set-receta-ingr-unidad"]')){
+    const id = e.target.dataset.id, idx = parseInt(e.target.dataset.idx,10);
+    const d = formulasData[id];
+    const receta = { ...(d.receta||{}) };
+    const lista = [...(receta.ingredientesList||[])];
+    lista[idx] = { ...lista[idx], unidad: e.target.value };
+    receta.ingredientesList = lista;
+    saveDoc("formulas", id, { receta });
+  }
 });
 
 appEl.addEventListener("keydown", e=>{
@@ -1413,6 +1518,15 @@ appEl.addEventListener("focusout", e=>{
       const data = JSON.parse(JSON.stringify(listaCompraData));
       data.items[i].texto = value;
       saveContenido("lista", data);
+    } else if(kind === "receta-ingr-cantidad" || kind === "receta-ingr-nombre"){
+      const fid = blurEl.dataset.id, idx = parseInt(blurEl.dataset.idx,10);
+      const fd = formulasData[fid];
+      const receta = { ...(fd.receta||{}) };
+      const lista = [...(receta.ingredientesList||[])];
+      const part = kind === "receta-ingr-cantidad" ? "cantidad" : "ingrediente";
+      lista[idx] = { ...lista[idx], [part]: value };
+      receta.ingredientesList = lista;
+      saveDoc("formulas", fid, { receta });
     }
   }
 });
