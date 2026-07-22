@@ -913,7 +913,7 @@ function renderFichaFormula(id){
   const ingredientesList = receta.ingredientesList || [];
   const pasosList = receta.pasosList || [];
   const hasReceta = adminOn || pasosList.length > 0 || receta.notas || receta.rendimientoCantidad || ingredientesList.length > 0;
-  const hasProducto = adminOn || producto.marca || producto.tienda || producto.link;
+  const hasProducto = adminOn || producto.marca || producto.tienda || producto.link || producto.etiqueta || producto.notas;
   return `
   <div class="ficha-toprow no-print">
     <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
@@ -954,6 +954,8 @@ function renderFichaFormula(id){
     </div>
     ${priceLine}
     ${producto.link || adminOn ? `<div class="field-block"><span class="field-label">Enlace</span><div class="field-value ${ed}" contenteditable="${editAttr}" data-field="link" data-collection="formulas" data-id="${id}" data-sub="producto" data-placeholder="https://...">${escapeHtml(producto.link||"")}</div>${producto.link ? `<a href="${escapeHtml(producto.link)}" target="_blank" rel="noopener" class="text-btn" style="margin-top:6px;">${icon("externalLink")}Abrir enlace</a>` : ""}</div>` : ""}
+    ${renderSubField("Etiqueta", "etiqueta", producto.etiqueta, "formulas", id, "producto", adminOn, "Ingredientes INCI que figuran en el envase")}
+    ${renderSubField("Notas", "notas", producto.notas, "formulas", id, "producto", adminOn, "Observaciones sobre este producto...")}
   </div>` : ""}
 
   ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="delete-formula" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
