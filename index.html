@@ -1726,7 +1726,7 @@ function addShopItem(input){
 
 /* ---------- guardado de campos editables (contenteditable) ---------- */
 appEl.addEventListener("focusout", e=>{
-  const el = e.target.closest("[data-field]");
+  const el = e.target.closest("[data-field]:not(.rich-editable)");
   if(el){
     const collection = el.dataset.collection, id = el.dataset.id, field = el.dataset.field, sub = el.dataset.sub;
     const value = el.innerText.replace(/\n+$/,"");
