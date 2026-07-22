@@ -64,6 +64,8 @@ a{ color: var(--sage-deep); }
 .icon-btn.admin-on{ background: var(--sage); border-color: var(--sage); color:#fff; }
 .icon-btn svg{ width:19px; height:19px; }
 .back-btn{ display:inline-flex; align-items:center; gap:6px; color: var(--ink-soft); font-size:.88rem; border:none; background:none; padding: 6px 0; margin-bottom: 14px; }
+.ficha-toprow{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ficha-toprow .back-btn{ margin-bottom:14px; }
 .back-btn svg{ width:16px; height:16px; }
 
 /* ---------- home ---------- */
@@ -724,7 +726,7 @@ function renderListScreen(kind){
   const showAddToList = kind === "ingredientes" && adminOn;
   let cardsHtml = items.map(([id, d])=> `
     <div class="card" data-action="open-${meta.openScreen}" data-id="${id}" tabindex="0" role="button">
-      <div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>
+      ${STATIC_FICHA_PHOTOS[meta.collection] && STATIC_FICHA_PHOTOS[meta.collection][id] ? `<img class="card-thumb" src="${STATIC_FICHA_PHOTOS[meta.collection][id]}" alt="">` : `<div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>`}
       <h3>${escapeHtml(d.nombre || "Sin nombre")}</h3>
       ${d.subtitulo ? `<div class="card-sub">${escapeHtml(d.subtitulo)}</div>` : ""}
       ${showAddToList ? `<button class="add-to-list-btn" data-action="add-ingrediente-to-shopping" data-nombre="${escapeHtml(d.nombre||"")}" title="Añadir a la lista de la compra" aria-label="Añadir a la lista de la compra">${icon("plus")}</button>` : ""}
@@ -852,7 +854,10 @@ function renderFichaSimple(collection, id){
   const ed = adminOn ? "editable" : "";
   const editAttr = adminOn ? "true" : "false";
   return `
-  <button class="back-btn" data-action="go-${cfg.backScreen}">${icon("arrowLeft")}${cfg.backLabel}</button>
+  <div class="ficha-toprow no-print">
+    <button class="back-btn" data-action="go-${cfg.backScreen}">${icon("arrowLeft")}${cfg.backLabel}</button>
+    <button class="pill-btn ghost" data-action="print-ficha">${icon("printer")}Imprimir</button>
+  </div>
   <div class="ficha-head">
     <h1 class="ficha-title ${ed}" contenteditable="${editAttr}" data-field="nombre" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.titlePlaceholder}">${escapeHtml(d.nombre||"")}</h1>
   </div>
@@ -912,7 +917,10 @@ function renderFichaFormula(id){
   const hasReceta = adminOn || pasosList.length > 0 || receta.notas || receta.rendimientoCantidad || ingredientesList.length > 0;
   const hasProducto = adminOn || producto.marca || producto.tienda || producto.link;
   return `
-  <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
+  <div class="ficha-toprow no-print">
+    <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
+    <button class="pill-btn ghost" data-action="print-ficha">${icon("printer")}Imprimir</button>
+  </div>
   <div class="ficha-head">
     <h1 class="ficha-title ${ed}" contenteditable="${editAttr}" data-field="nombre" data-collection="formulas" data-id="${id}" data-placeholder="Nombre de la fórmula">${escapeHtml(d.nombre||"")}</h1>
   </div>
@@ -1426,6 +1434,7 @@ appEl.addEventListener("click", e=>{
       break;
     }
     case "cal-print":
+    case "print-ficha":
       if(isSafariBrowser()){
         openAlert({ title:"Imprimir en Safari", message:"En Safari, este botón puede tardar mucho en abrir el diálogo de impresión. Es más rápido usar Cmd+P (o Archivo → Imprimir) directamente." });
       } else {
