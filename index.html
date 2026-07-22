@@ -152,8 +152,8 @@ a{ color: var(--sage-deep); }
 .producto-main-row{ display:flex; gap:20px; align-items:flex-start; }
 .producto-fields-col{ flex:1; min-width:0; }
 .producto-foto-col{ flex-shrink:0; width:120px; display:flex; flex-direction:column; align-items:center; }
-.producto-foto-wrap{ width:120px; height:150px; border-radius: var(--radius-sm); overflow:hidden; background: var(--bg-alt); margin-bottom:8px; display:flex; align-items:center; justify-content:center; }
-.producto-foto-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
+.producto-foto-wrap{ width:120px; border-radius: var(--radius-sm); overflow:hidden; background: var(--bg-alt); margin-bottom:8px; line-height:0; }
+.producto-foto-wrap img{ width:100%; height:auto; display:block; cursor:zoom-in; }
 .producto-foto-empty{ width:120px; height:150px; border-radius: var(--radius-sm); background: var(--sage-soft); color: var(--sage-deep); border:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; font-size:.68rem; text-align:center; padding:6px; margin-bottom:8px; }
 .producto-foto-empty svg{ width:20px; height:20px; opacity:.8; }
 @media (max-width: 560px){
@@ -255,6 +255,10 @@ select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid
 /* ---------- modal ---------- */
 .overlay{ position:fixed; inset:0; background: rgba(43,42,39,.32); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px; }
 .modal{ background: var(--card); border-radius: var(--radius); padding: 28px 26px; max-width: 360px; width:100%; }
+.zoom-overlay{ background: rgba(30,29,26,.82); cursor:zoom-out; }
+.zoom-img{ max-width:90vw; max-height:88vh; width:auto; height:auto; border-radius: var(--radius-sm); box-shadow: 0 20px 50px rgba(0,0,0,.4); cursor:zoom-out; }
+.zoom-close{ position:fixed; top:20px; right:20px; width:40px; height:40px; border-radius:50%; background: rgba(255,255,255,.92); color: var(--ink); display:flex; align-items:center; justify-content:center; }
+.zoom-close svg{ width:18px; height:18px; }
 .modal h3{ font-size:1.15rem; margin-bottom:10px; }
 .modal p{ color: var(--ink-soft); font-size:.88rem; }
 .modal-actions{ display:flex; gap:10px; margin-top: 18px; justify-content:flex-end; }
@@ -567,6 +571,7 @@ function icon(name){
     lockOpen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M7.8 10.5V7.2a4.2 4.2 0 0 1 7.9-2"/></svg>',
     pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20.2l.8-3.6L15.9 5.5a1.8 1.8 0 0 1 2.6 0l1 1a1.8 1.8 0 0 1 0 2.6L8.4 20.2l-3.6.8z"/><path d="M14 7.4l2.6 2.6"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="12" y1="4.5" x2="12" y2="19.5"/><line x1="4.5" y1="12" x2="19.5" y2="12"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9.5 7V5.2a1.5 1.5 0 0 1 1.5-1.5h2a1.5 1.5 0 0 1 1.5 1.5V7M7 7l.7 12a2 2 0 0 0 2 1.9h4.6a2 2 0 0 0 2-1.9L17 7"/></svg>',
     arrowLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5.5l-7 6.5 7 6.5"/></svg>',
@@ -990,7 +995,7 @@ function renderMonedaUnidadField(moneda, id, adminOn){
 function renderProductoFotoSmall(d, id, adminOn){
   if(d.foto){
     return `<div class="producto-foto-col">
-      <div class="producto-foto-wrap"><img src="${d.foto}" alt=""></div>
+      <div class="producto-foto-wrap"><img src="${d.foto}" alt="" data-action="zoom-photo" data-src="${d.foto}"></div>
       ${adminOn ? `<button class="text-btn" data-action="change-photo" data-collection="formulas" data-id="${id}">${icon("photo")}Cambiar foto</button>` : ""}
     </div>`;
   }
@@ -1184,7 +1189,7 @@ function renderListaCompra(){
 function openPrompt(opts){ V.promptModal = opts; renderApp(); const el=document.getElementById("promptInput"); if(el){ el.focus(); } }
 function openConfirm(opts){ V.confirmModal = opts; renderApp(); }
 function openAlert(opts){ V.alertModal = opts; renderApp(); }
-function closeAllModals(){ V.showAdminModal = false; V.promptModal = null; V.confirmModal = null; V.alertModal = null; V.creditsModal = false; }
+function closeAllModals(){ V.showAdminModal = false; V.promptModal = null; V.confirmModal = null; V.alertModal = null; V.creditsModal = false; V.zoomPhoto = null; }
 
 function submitPromptModal(){
   const input = document.getElementById("promptInput");
@@ -1218,7 +1223,14 @@ function renderModals(){
   if(V.alertModal) return renderAlertModalHtml(V.alertModal);
   if(V.showAdminModal) return renderAdminModalHtml();
   if(V.creditsModal) return renderCreditsModalHtml();
+  if(V.zoomPhoto) return renderZoomModalHtml(V.zoomPhoto);
   return "";
+}
+function renderZoomModalHtml(src){
+  return `<div class="overlay zoom-overlay" data-action="close-modal">
+    <button class="zoom-close no-print" data-action="close-modal" aria-label="Cerrar">${icon("close")}</button>
+    <img class="zoom-img" src="${src}" alt="" data-stop="1">
+  </div>`;
 }
 
 function renderPromptModalHtml(pm){
@@ -1373,6 +1385,10 @@ appEl.addEventListener("click", e=>{
     case "change-photo":
       pendingPhotoTarget = { collection: btn.dataset.collection, id: btn.dataset.id };
       document.getElementById("hiddenPhotoInput").click();
+      break;
+    case "zoom-photo":
+      V.zoomPhoto = btn.dataset.src;
+      renderApp();
       break;
     case "set-unidad": break; // handled on change event
     case "set-categoria-formula": break; // handled on change event
