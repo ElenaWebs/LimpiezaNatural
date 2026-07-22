@@ -197,6 +197,12 @@ select.field-value{ appearance:none; background: var(--bg-alt); border:1px solid
 .paso-txt{ flex:1; border-bottom:1px dashed var(--line-strong); padding-bottom:5px; }
 .paso-line-view{ display:flex; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); line-height:1.5; }
 .paso-line-view:last-child{ border-bottom:none; }
+.notas-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.nota-line{ display:flex; gap:8px; align-items:flex-start; }
+.nota-bullet{ flex-shrink:0; color: var(--sage-deep); padding-top:2px; }
+.nota-txt{ flex:1; border-bottom:1px dashed var(--line-strong); padding-bottom:5px; }
+.nota-line-view{ display:flex; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); line-height:1.5; }
+.nota-line-view:last-child{ border-bottom:none; }
 
 /* ---------- calendario / lista compra ---------- */
 .cal-section{ background: var(--card); border:1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin-bottom:16px; }
@@ -917,8 +923,10 @@ function renderFichaFormula(id){
   }
   const ingredientesList = receta.ingredientesList || [];
   const pasosList = receta.pasosList || [];
-  const hasReceta = adminOn || pasosList.length > 0 || receta.notas || receta.rendimientoCantidad || ingredientesList.length > 0;
-  const hasProducto = adminOn || producto.marca || producto.tienda || producto.link || producto.etiqueta || producto.notas;
+  const recetaNotasList = receta.notasList || [];
+  const productoNotasList = producto.notasList || [];
+  const hasReceta = adminOn || pasosList.length > 0 || recetaNotasList.length > 0 || receta.rendimientoCantidad || ingredientesList.length > 0;
+  const hasProducto = adminOn || producto.marca || producto.tienda || producto.link || producto.etiqueta || productoNotasList.length > 0;
   return `
   <div class="ficha-toprow no-print">
     <button class="back-btn" data-action="go-formulas">${icon("arrowLeft")}Volver a la guía de limpieza</button>
@@ -935,7 +943,7 @@ function renderFichaFormula(id){
     ${renderRendimientoLine(receta, id, adminOn)}
     ${renderRecetaIngredientesList(ingredientesList, id, adminOn)}
     ${renderRecetaPasosList(pasosList, id, adminOn)}
-    ${renderSubField("Notas", "notas", receta.notas, "formulas", id, "receta", adminOn, "Conservación, variantes...")}
+    ${renderNotasList(recetaNotasList, id, "receta", adminOn)}
   </div>` : ""}
 
   ${hasProducto ? `
@@ -960,7 +968,7 @@ function renderFichaFormula(id){
     ${priceLine}
     ${producto.link || adminOn ? `<div class="field-block"><span class="field-label">Enlace</span><div class="field-value ${ed}" contenteditable="${editAttr}" data-field="link" data-collection="formulas" data-id="${id}" data-sub="producto" data-placeholder="https://...">${escapeHtml(producto.link||"")}</div>${producto.link ? `<a href="${escapeHtml(producto.link)}" target="_blank" rel="noopener" class="text-btn" style="margin-top:6px;">${icon("externalLink")}Abrir enlace</a>` : ""}</div>` : ""}
     ${renderSubField("Etiqueta", "etiqueta", producto.etiqueta, "formulas", id, "producto", adminOn, "Ingredientes INCI que figuran en el envase")}
-    ${renderSubField("Notas", "notas", producto.notas, "formulas", id, "producto", adminOn, "Observaciones sobre este producto...")}
+    ${renderNotasList(productoNotasList, id, "producto", adminOn)}
   </div>` : ""}
 
   ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="delete-formula" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
@@ -1004,6 +1012,7 @@ function renderProductoFotoSmall(d, id, adminOn){
   }
   return "";
 }
+const RECETA_UNIDADES = ["ml","L","g","kg","cucharada sopera","cucharadas sopera","cucharada de postre","cucharadas de postre","cucharada de café","cucharadas de café","cucharadas","cucharaditas","gota","gotas","ud"];
 function renderRecetaIngredientesList(lista, id, adminOn){
   if(!adminOn && lista.length === 0) return "";
   const editAttr = adminOn ? "true" : "false";
@@ -1011,7 +1020,7 @@ function renderRecetaIngredientesList(lista, id, adminOn){
     <div class="ingr-line">
       <div class="ingr-cant field-value" contenteditable="${editAttr}" data-action-blur="receta-ingr-cantidad" data-id="${id}" data-idx="${idx}" data-placeholder="Cant.">${escapeHtml(line.cantidad||"")}</div>
       <select class="ingr-unidad" data-action="set-receta-ingr-unidad" data-id="${id}" data-idx="${idx}">
-        ${["ml","L","g","kg","cucharadas","cucharaditas","gotas","ud"].map(u=> `<option value="${u}" ${u===(line.unidad||"ml")?"selected":""}>${u}</option>`).join("")}
+        ${RECETA_UNIDADES.map(u=> `<option value="${u}" ${u===(line.unidad||"ml")?"selected":""}>${u}</option>`).join("")}
       </select>
       <div class="ingr-nombre field-value" contenteditable="${editAttr}" data-action-blur="receta-ingr-nombre" data-id="${id}" data-idx="${idx}" data-placeholder="Ingrediente">${escapeHtml(line.ingrediente||"")}</div>
       <button class="text-btn" data-action="del-receta-ingr" data-id="${id}" data-idx="${idx}">${icon("trash")}</button>
@@ -1041,6 +1050,24 @@ function renderRecetaPasosList(lista, id, adminOn){
     <span class="field-label">Preparación</span>
     <div class="pasos-list">${rows}</div>
     ${adminOn ? `<button class="text-btn" data-action="add-receta-paso" data-id="${id}">${icon("plus")}Añadir paso</button>` : ""}
+  </div>`;
+}
+function renderNotasList(lista, id, sub, adminOn){
+  if(!adminOn && lista.length === 0) return "";
+  const editAttr = adminOn ? "true" : "false";
+  const rows = lista.map((nota, idx)=> adminOn ? `
+    <div class="nota-line">
+      <span class="nota-bullet">•</span>
+      <div class="nota-txt field-value" contenteditable="${editAttr}" data-action-blur="nota-item" data-id="${id}" data-sub="${sub}" data-idx="${idx}" data-placeholder="Nota">${escapeHtml(nota)}</div>
+      <button class="text-btn" data-action="del-nota" data-id="${id}" data-sub="${sub}" data-idx="${idx}">${icon("trash")}</button>
+    </div>` : `
+    <div class="nota-line-view"><span class="nota-bullet">•</span><span>${escapeHtml(nota)}</span></div>`
+  ).join("");
+  return `
+  <div class="field-block">
+    <span class="field-label">Notas</span>
+    <div class="notas-list">${rows}</div>
+    ${adminOn ? `<button class="text-btn" data-action="add-nota" data-id="${id}" data-sub="${sub}">${icon("plus")}Añadir nota</button>` : ""}
   </div>`;
 }
 
@@ -1437,6 +1464,27 @@ appEl.addEventListener("click", e=>{
       renderApp();
       break;
     }
+    case "add-nota": {
+      const fid = btn.dataset.id, sub = btn.dataset.sub;
+      const fd = formulasData[fid];
+      const subObj = { ...(fd[sub]||{}) };
+      const lista = [...(subObj.notasList||[]), ""];
+      subObj.notasList = lista;
+      saveDoc("formulas", fid, { [sub]: subObj });
+      renderApp();
+      break;
+    }
+    case "del-nota": {
+      const fid = btn.dataset.id, sub = btn.dataset.sub, idx = parseInt(btn.dataset.idx,10);
+      const fd = formulasData[fid];
+      const subObj = { ...(fd[sub]||{}) };
+      const lista = [...(subObj.notasList||[])];
+      lista.splice(idx,1);
+      subObj.notasList = lista;
+      saveDoc("formulas", fid, { [sub]: subObj });
+      renderApp();
+      break;
+    }
     case "cal-prev-month": {
       V.calMonth--;
       if(V.calMonth < 0){ V.calMonth = 11; V.calYear--; }
@@ -1648,6 +1696,14 @@ appEl.addEventListener("focusout", e=>{
       lista[idx] = value;
       receta.pasosList = lista;
       saveDoc("formulas", fid, { receta });
+    } else if(kind === "nota-item"){
+      const fid = blurEl.dataset.id, sub = blurEl.dataset.sub, idx = parseInt(blurEl.dataset.idx,10);
+      const fd = formulasData[fid];
+      const subObj = { ...(fd[sub]||{}) };
+      const lista = [...(subObj.notasList||[])];
+      lista[idx] = value;
+      subObj.notasList = lista;
+      saveDoc("formulas", fid, { [sub]: subObj });
     }
   }
 });
