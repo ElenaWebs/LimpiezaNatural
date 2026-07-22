@@ -754,10 +754,11 @@ function renderCategoriasGuia(){
   const sinCategoria = Object.values(formulasData).some(d=> !d.categoriaId || !catIds.has(d.categoriaId));
 
   let cardsHtml = cats.map(([id,c])=> `
-    <button class="card" data-action="open-categoriaFormulas" data-categoria-id="${id}">
-      <div class="card-thumb-placeholder">${icon("tag")}</div>
+    <div class="card" data-action="open-categoriaFormulas" data-categoria-id="${id}" tabindex="0" role="button">
+      ${c.foto ? `<img class="card-thumb" src="${c.foto}" alt="">` : `<div class="card-thumb-placeholder">${icon("tag")}</div>`}
       <h3>${escapeHtml(c.nombre || "Sin nombre")}</h3>
-    </button>`).join("");
+      ${adminOn ? `<button class="add-to-list-btn" data-action="change-photo" data-collection="categoriasGuia" data-id="${id}" title="Cambiar foto" aria-label="Cambiar foto">${icon("photo")}</button>` : ""}
+    </div>`).join("");
 
   if(sinCategoria){
     cardsHtml += `
