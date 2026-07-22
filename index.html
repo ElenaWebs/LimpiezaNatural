@@ -818,6 +818,9 @@ function renderFormulasEnCategoria(categoriaId){
 }
 
 /* ---------- ficha: ingrediente ---------- */
+const STATIC_FICHA_PHOTOS = {
+  ingredientes: { agua: "images/agua-portada.jpg" }
+};
 const SIMPLE_FICHA_CONFIG = {
   ingredientes: {
     backScreen: "ingredientes", backLabel: "Volver a ingredientes",
@@ -854,7 +857,7 @@ function renderFichaSimple(collection, id){
     <h1 class="ficha-title ${ed}" contenteditable="${editAttr}" data-field="nombre" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.titlePlaceholder}">${escapeHtml(d.nombre||"")}</h1>
   </div>
   <div class="field-value ${ed}" contenteditable="${editAttr}" data-field="subtitulo" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.subtituloPlaceholder}" style="color:var(--ink-soft);margin-bottom:14px;">${escapeHtml(d.subtitulo||"")}</div>
-  ${cfg.noPhoto ? "" : renderFichaPhoto(d, collection, id, adminOn)}
+  ${STATIC_FICHA_PHOTOS[collection] && STATIC_FICHA_PHOTOS[collection][id] ? `<div class="ficha-photo-wrap"><img src="${STATIC_FICHA_PHOTOS[collection][id]}" alt=""></div>` : (cfg.noPhoto ? "" : renderFichaPhoto(d, collection, id, adminOn))}
   ${cfg.fields.map(f=> renderField(f.label, f.field, d[f.field], collection, id, adminOn, f.placeholder)).join("")}
   ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="${cfg.deleteAction}" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
   `;
