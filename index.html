@@ -726,7 +726,7 @@ function renderListScreen(kind){
   const showAddToList = kind === "ingredientes" && adminOn;
   let cardsHtml = items.map(([id, d])=> `
     <div class="card" data-action="open-${meta.openScreen}" data-id="${id}" tabindex="0" role="button">
-      ${STATIC_FICHA_PHOTOS[meta.collection] && STATIC_FICHA_PHOTOS[meta.collection][id] ? `<img class="card-thumb" src="${STATIC_FICHA_PHOTOS[meta.collection][id]}" alt="">` : `<div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>`}
+      ${d.foto ? `<img class="card-thumb" src="${d.foto}" alt="">` : `<div class="card-thumb-placeholder">${icon(meta.emptyIcon)}</div>`}
       <h3>${escapeHtml(d.nombre || "Sin nombre")}</h3>
       ${d.subtitulo ? `<div class="card-sub">${escapeHtml(d.subtitulo)}</div>` : ""}
       ${showAddToList ? `<button class="add-to-list-btn" data-action="add-ingrediente-to-shopping" data-nombre="${escapeHtml(d.nombre||"")}" title="Añadir a la lista de la compra" aria-label="Añadir a la lista de la compra">${icon("plus")}</button>` : ""}
@@ -820,19 +820,11 @@ function renderFormulasEnCategoria(categoriaId){
 }
 
 /* ---------- ficha: ingrediente ---------- */
-const STATIC_FICHA_PHOTOS = {
-  ingredientes: {
-    agua: "images/agua-portada.jpg",
-    alcohol70: "images/alcohol70-portada.jpg",
-    aguaOxigenada: "images/aguaOxigenada-portada.jpg",
-    vinagreLimpieza: "images/vinagreLimpieza-portada.jpg"
-  }
-};
 const SIMPLE_FICHA_CONFIG = {
   ingredientes: {
     backScreen: "ingredientes", backLabel: "Volver a ingredientes",
     titlePlaceholder: "Nombre del ingrediente", subtituloPlaceholder: "Subtítulo o nombre técnico",
-    deleteAction: "delete-ingrediente", noPhoto: true,
+    deleteAction: "delete-ingrediente",
     fields: [
       { label:"Descripción", field:"descripcion", placeholder:"Qué es y de dónde viene" },
       { label:"Para qué sirve", field:"usos", placeholder:"Usos principales en limpieza" },
@@ -867,7 +859,7 @@ function renderFichaSimple(collection, id){
     <h1 class="ficha-title ${ed}" contenteditable="${editAttr}" data-field="nombre" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.titlePlaceholder}">${escapeHtml(d.nombre||"")}</h1>
   </div>
   <div class="field-value ${ed}" contenteditable="${editAttr}" data-field="subtitulo" data-collection="${collection}" data-id="${id}" data-placeholder="${cfg.subtituloPlaceholder}" style="color:var(--ink-soft);margin-bottom:14px;">${escapeHtml(d.subtitulo||"")}</div>
-  ${STATIC_FICHA_PHOTOS[collection] && STATIC_FICHA_PHOTOS[collection][id] ? `<div class="ficha-photo-wrap"><img src="${STATIC_FICHA_PHOTOS[collection][id]}" alt=""></div>` : (cfg.noPhoto ? "" : renderFichaPhoto(d, collection, id, adminOn))}
+  ${renderFichaPhoto(d, collection, id, adminOn)}
   ${cfg.fields.map(f=> renderField(f.label, f.field, d[f.field], collection, id, adminOn, f.placeholder)).join("")}
   ${adminOn ? `<div class="card-actions-row"><button class="text-btn" data-action="${cfg.deleteAction}" data-id="${id}">${icon("trash")}Eliminar ficha</button></div>` : ""}
   `;
